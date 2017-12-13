@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Ring</string>
+    <string name="ring_logo_content_description">Ring, bring on</string>
+    <string name="login">Login</string>
+    <string name="retry_label">Retry agian</string>
+    <string name="no_item">No item</string>
+    <string name="tag_list">Tag list</string>
+    <string name="register_a_tag">Register a Tag</string>
+    <string name="name_your_tag">Name your tag</string>
+    <string name="add">Add</string>
+    <string name="cancel">Cancel</string>
+    <string name="signout">Sign out</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+</resources>

@@ -1,0 +1,10 @@
+{
+  "client_id": "web_app",
+  "redirect_uri": "mars.ring:/oauth2redirect",
+  "authorization_scope": "openid email profile",
+  "discovery_uri": "",
+  "authorization_endpoint_uri": "https://ring.webebook.org/auth/realms/jhipster/protocol/openid-connect/auth",
+  "token_endpoint_uri": "https://ring.webebook.org/auth/realms/jhipster/protocol/openid-connect/token",
+  "registration_endpoint_uri": "https://ring.webebook.org/auth/realms/jhipster/clients-registrations/openid-connect",
+  "https_required": true
+}
