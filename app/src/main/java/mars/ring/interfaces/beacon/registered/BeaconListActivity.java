@@ -10,6 +10,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -19,6 +21,7 @@ import mars.ring.R;
 import mars.ring.application.RingApp;
 import mars.ring.domain.model.beacontag.BeaconDTO;
 import mars.ring.interfaces.beacon.BeaconModelAdapter;
+import mars.ring.interfaces.beacon.discovery.ShowOneActivity;
 
 /**
  * BeaconListActivity that displays list of registered beacons.
@@ -44,6 +47,15 @@ public class BeaconListActivity extends AppCompatActivity {
         lv.setAdapter(beaconsAdapter);
         TextView tv = (TextView) findViewById(R.id.empty);
         lv.setEmptyView(tv);
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Intent intent = new Intent(BeaconListActivity.this, ShowOneActivity.class);
+                intent.putExtra(BeaconDTO.MAC, beaconsAdapter.getItem(i).getMac());
+                intent.putExtra(BeaconDTO.TAG_NAME, beaconsAdapter.getItem(i).getTagName());
+                startActivity(intent);
+            }
+        });
         getBeacons();
     }
 

@@ -37,6 +37,9 @@
         <activity android:name=".interfaces.beacon.discovery.BeaconListActivity"
             android:label="@string/register_a_tag">
         </activity>
+        <activity android:name=".interfaces.beacon.discovery.ShowOneActivity"
+            android:label="Distance to">
+        </activity>
         <activity android:name=".interfaces.beacon.registered.BeaconListActivity"
             android:label="@string/tag_list">
         </activity>

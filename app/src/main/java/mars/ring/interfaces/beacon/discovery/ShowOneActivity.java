@@ -19,56 +19,43 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
-import org.altbeacon.beacon.BeaconParser;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
 import java.util.Collection;
 
 import mars.ring.R;
-import mars.ring.domain.model.beacontag.Beacon;
 import mars.ring.domain.model.beacontag.BeaconDTO;
 import mars.ring.interfaces.beacon.BeaconsAdapter;
 
 /**
- * BeaconListActivty a class that shows list of (known/unknown)beacons.
- *
- * Created by a developer on 23/10/17.
+ * Created by developer on 14/12/17.
  */
 
-public class BeaconListActivity extends AppCompatActivity implements BeaconConsumer, RangeNotifier {
+public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer, RangeNotifier {
 
     final private BeaconsAdapter mAdapter = new BeaconsAdapter();
     private BeaconManager beaconManager;
 
-    private static final String TAG = "D.BeaconListActivity";
+    private static final String TAG = ShowOneActivity.class.getSimpleName();
+    private String theOneWithMac;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.discovery_beacon_list);
+        setContentView(R.layout.show_one_beacon);
+
+        theOneWithMac = getIntent().getStringExtra(BeaconDTO.MAC);
+        String tagName = getIntent().getStringExtra(BeaconDTO.TAG_NAME);
+        setTitle(getTitle() + ": " + tagName);
 
         ListView lView = (ListView) findViewById(R.id.list_view);
         lView.setAdapter(mAdapter);
         TextView tv = (TextView) findViewById(R.id.empty);
         lView.setEmptyView(tv);
-        lView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Log.d(TAG, "onItemClick: " + i + ": " + l + " view: " + view + " data: " + mAdapter.getItem(i));
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra(BeaconDTO.MAC, mAdapter.getItem(i).id);
-                resultIntent.putExtra(BeaconDTO.IDENTIFIER, mAdapter.getItem(i).uuid);
-                resultIntent.putExtra(BeaconDTO.MAJOR, mAdapter.getItem(i).major);
-                resultIntent.putExtra(BeaconDTO.MINOR, mAdapter.getItem(i).minor);
-                resultIntent.putExtra(BeaconDTO.TX_POWER, mAdapter.getItem(i).txPower);
-//                resultIntent.putExtra(BeaconDTO.BATTERY_LEVEL, mAdapter.getItem(i).batteryLevel);
-                setResult(Activity.RESULT_OK, resultIntent);
-                finish();
-            }
-        });
 
         checkLocationPermissionGranted();
         if (!isBluetoothAvailableAndEnabled()) {
@@ -90,14 +77,18 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
     }
 
     @Override
-    public void didRangeBeaconsInRegion(final Collection<org.altbeacon.beacon.Beacon> beacons, Region region) {
-        Log.d(TAG, "didRangeBeaconsInRegion event occured! " + beacons.size() + " " + region.getUniqueId());
+    public void didRangeBeaconsInRegion(final Collection<Beacon> beacons, Region region) {
+        Log.d(TAG, "didRangeBeaconsInRegion event occurred! " + beacons.size() + " " + region.getUniqueId());
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mAdapter.clear();
                 if (beacons.size() > 0) {
-                    mAdapter.setAll(Beacon.toList(beacons));
+                    for (Beacon b: beacons) {
+                        if (b.getBluetoothAddress().equals(theOneWithMac)) {
+                            mAdapter.addNewBeacon(mars.ring.domain.model.beacontag.Beacon.toModel(b));
+                        }
+                    }
                 }
                 mAdapter.notifyDataSetChanged();
             }
@@ -183,5 +174,6 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
             }
         }
     }
+
 
 }

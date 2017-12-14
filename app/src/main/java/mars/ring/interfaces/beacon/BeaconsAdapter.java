@@ -96,6 +96,7 @@ public class BeaconsAdapter extends BaseAdapter {
         public ViewHolder(final View target) {
             text1 = (TextView) target.findViewById(android.R.id.text1);
             text2 = (TextView) target.findViewById(android.R.id.text2);
+            text1.setTextSize(120);
         }
         public void updateAccordingToBeacon(final Beacon beacon) {
             text1.setText(beacon.uuid);

@@ -38,7 +38,6 @@ public class Beacon {
     public Beacon() {}
 
     public Beacon(org.altbeacon.beacon.Beacon b) {
-        uuid = b.getId1().toString();
         major = b.getId2().toInt();
         minor = b.getId3().toInt();
         txPower = b.getTxPower();
@@ -46,6 +45,7 @@ public class Beacon {
         id = b.getBluetoothAddress();
         DecimalFormat df = new DecimalFormat("#.#");
         df.setRoundingMode(RoundingMode.CEILING);
+        uuid = df.format(b.getDistance());
         arguments = b.toString() + "M:" + b.getManufacturer();
     }
 
@@ -78,6 +78,10 @@ public class Beacon {
             result.add(new Beacon(b));
         }
         return result;
+    }
+
+    public static Beacon toModel(org.altbeacon.beacon.Beacon beacon) {
+        return new Beacon(beacon);
     }
 
     public static boolean isAltBeacon(final byte[] data) {

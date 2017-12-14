@@ -9,6 +9,10 @@ import android.support.v7.app.AppCompatDelegate;
 
 import com.google.common.io.BaseEncoding;
 
+import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.powersave.BackgroundPowerSaver;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -26,12 +30,24 @@ public final class RingApp extends android.app.Application {
 
     private AuthRepo authRepo;
     private BeaconsRepo beaconsRepo;
+    private BackgroundPowerSaver backgroundPowerSaver;
 
 
     @Override
     public void onCreate() {
         super.onCreate();
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+
+        BeaconManager beaconManager = org.altbeacon.beacon.BeaconManager.getInstanceForApplication(this);
+        // iBeacon layout
+        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout(
+                "m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
+
+        // simply constructing this class and holding a reference to it in Application
+        // will automatically cause the BeaconLibrary to save battery whenever tha application
+        // is not visable. This reduces bluetooth power usage about 60%
+        backgroundPowerSaver = new BackgroundPowerSaver(this);
+        // Note: above feature need to be use along with BootstrapNotifier otherwise we see this error log: Cannot contact service to set scan periods
 
         authRepo = new AuthRepo(this);
         beaconsRepo = new BeaconsRepo(this, authRepo);
