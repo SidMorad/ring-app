@@ -99,13 +99,11 @@ public class BeaconsAdapter extends BaseAdapter {
             text1.setTextSize(120);
         }
         public void updateAccordingToBeacon(final Beacon beacon) {
-            text1.setText(beacon.uuid);
+            text1.setText(beacon.distance());
             String secondLine = String.format(
-                    "%s RSSI: %d TxPower: %d Id: %S",
-                    beacon.arguments,
-                    beacon.rssi,
+                    "TxPower: %d, rssi: %d",
                     beacon.txPower,
-                    beacon.id);
+                    beacon.rssi);
             text2.setText(secondLine);
         }
     }

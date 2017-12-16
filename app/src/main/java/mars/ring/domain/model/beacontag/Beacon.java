@@ -1,9 +1,12 @@
 package mars.ring.domain.model.beacontag;
 
+import android.bluetooth.BluetoothDevice;
+
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 
 /**
  * Beacon model
@@ -15,9 +18,11 @@ public class Beacon {
     public String uuid;         // UUID of beacon
     public Integer major;
     public Integer minor;
-    public String arguments;    // string representing arguments inside AltBeacon
     public int txPower;         // reference power
     public int rssi;            // current RSSI
+    public double distance;
+    @Deprecated
+    public String arguments;    // string representing arguments inside AltBeacon
 
     public long timestamp;      // timestamp when this beacon was last time scanned
     public String id;           // ID of the beacon, in case of android it will be BT MAC address
@@ -38,39 +43,24 @@ public class Beacon {
     public Beacon() {}
 
     public Beacon(org.altbeacon.beacon.Beacon b) {
+        uuid = b.getId1().toString();
         major = b.getId2().toInt();
         minor = b.getId3().toInt();
         txPower = b.getTxPower();
         rssi = b.getRssi();
         id = b.getBluetoothAddress();
-        DecimalFormat df = new DecimalFormat("#.#");
-        df.setRoundingMode(RoundingMode.CEILING);
-        uuid = df.format(b.getDistance());
-        arguments = b.toString() + "M:" + b.getManufacturer();
+        distance = b.getDistance();
     }
 
-/*    public void updateFrom(final BluetoothDevice device,
-                           final int rssi,
-                           final byte[] advertisement) {
-        this.rssi = rssi;
-        this.id = device.getAddress();
-        this.timestamp = new Date().getTime();
-        this.txPower = (int) advertisement[TXPOWER_INDEX];
-        this.arguments = String.format("arg1: %02x %02x  arg2: %02x %02x",
-                advertisement[ARGS_START_INDEX],
-                advertisement[ARGS_START_INDEX + 1],
-                advertisement[ARGS_START_INDEX + 2],
-                advertisement[ARGS_START_INDEX + 3]);
-
-        StringBuilder sb = new StringBuilder();
-        for(int i = UUID_START_INDEX, offset = 0; i <= UUID_STOP_INDEX; ++i, ++offset) {
-            sb.append(String.format("%02x", (int)(advertisement[i] & 0xff)));
-            if (offset == 3 || offset == 5 || offset == 7 || offset == 9) {
-                sb.append("-");
-            }
-        }
-        this.uuid = sb.toString();
-    }*/
+    public Beacon(Beacon other) {
+        id = other.id;
+        uuid = other.uuid;
+        major = other.major;
+        minor = other.minor;
+        txPower = other.txPower;
+        rssi = other.rssi;
+        distance = 0;
+    }
 
     public static ArrayList<Beacon> toList(Collection<org.altbeacon.beacon.Beacon> beacons) {
         ArrayList<Beacon> result = new ArrayList<Beacon>();
@@ -93,6 +83,39 @@ public class Beacon {
         if(code != BEACON_CODE_VALUE) return false;
 
         return true;
+    }
+
+    public String distance() {
+        if (distance == 0) {
+            return "-.-";
+        }
+        DecimalFormat df = new DecimalFormat("#.#");
+        df.setRoundingMode(RoundingMode.CEILING);
+        return df.format(distance);
+    }
+
+    @Deprecated // in in favour of using Beacon Library
+    public void updateFrom(final BluetoothDevice device,
+                           final int rssi,
+                           final byte[] advertisement) {
+        this.rssi = rssi;
+        this.id = device.getAddress();
+        this.timestamp = new Date().getTime();
+        this.txPower = (int) advertisement[TXPOWER_INDEX];
+        this.arguments = String.format("arg1: %02x %02x  arg2: %02x %02x",
+                advertisement[ARGS_START_INDEX],
+                advertisement[ARGS_START_INDEX + 1],
+                advertisement[ARGS_START_INDEX + 2],
+                advertisement[ARGS_START_INDEX + 3]);
+
+        StringBuilder sb = new StringBuilder();
+        for(int i = UUID_START_INDEX, offset = 0; i <= UUID_STOP_INDEX; ++i, ++offset) {
+            sb.append(String.format("%02x", (int)(advertisement[i] & 0xff)));
+            if (offset == 3 || offset == 5 || offset == 7 || offset == 9) {
+                sb.append("-");
+            }
+        }
+        this.uuid = sb.toString();
     }
 
 }

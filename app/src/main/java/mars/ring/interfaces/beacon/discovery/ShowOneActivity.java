@@ -19,7 +19,6 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.RangeNotifier;
@@ -28,6 +27,7 @@ import org.altbeacon.beacon.Region;
 import java.util.Collection;
 
 import mars.ring.R;
+import mars.ring.domain.model.beacontag.Beacon;
 import mars.ring.domain.model.beacontag.BeaconDTO;
 import mars.ring.interfaces.beacon.BeaconsAdapter;
 
@@ -77,20 +77,25 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
     }
 
     @Override
-    public void didRangeBeaconsInRegion(final Collection<Beacon> beacons, Region region) {
+    public void didRangeBeaconsInRegion(final Collection<org.altbeacon.beacon.Beacon> beacons, Region region) {
         Log.d(TAG, "didRangeBeaconsInRegion event occurred! " + beacons.size() + " " + region.getUniqueId());
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mAdapter.clear();
                 if (beacons.size() > 0) {
-                    for (Beacon b: beacons) {
+                    if (mAdapter.getCount() > 0) {
+                        Beacon current = mAdapter.getItem(0);
+                        mAdapter.clear();
+                        mAdapter.addNewBeacon(new Beacon(current));
+                    }
+                    for (org.altbeacon.beacon.Beacon b: beacons) {
                         if (b.getBluetoothAddress().equals(theOneWithMac)) {
-                            mAdapter.addNewBeacon(mars.ring.domain.model.beacontag.Beacon.toModel(b));
+                            mAdapter.clear();
+                            mAdapter.addNewBeacon(Beacon.toModel(b));
                         }
                     }
+                    mAdapter.notifyDataSetChanged();
                 }
-                mAdapter.notifyDataSetChanged();
             }
         });
     }
