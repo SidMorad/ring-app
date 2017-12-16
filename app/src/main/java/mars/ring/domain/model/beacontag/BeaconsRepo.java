@@ -1,13 +1,17 @@
 package mars.ring.domain.model.beacontag;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import mars.ring.application.RingApp;
+import mars.ring.application.util.ErrorBody;
 import mars.ring.domain.model.user.AuthRepo;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -22,7 +26,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 
 public class BeaconsRepo {
-    private final String TAG = this.getClass().getSimpleName();
+    private static final String TAG = BeaconsRepo.class.getSimpleName();
     private final String BEACONS_URL_BASE = "https://ring.webebook.org/api/";
 
     private RingApp app;
@@ -77,7 +81,14 @@ public class BeaconsRepo {
             if (response.isSuccessful()) {
                 callback.call(null);
             } else {
-                callback.call(new Exception("Create a beacon failed"));
+                try {
+                    String errorBody = response.errorBody().string();
+                    Log.w(TAG, errorBody);
+                    ErrorBody error = new Gson().fromJson(errorBody, ErrorBody.class);
+                    callback.call(new Exception(error.getTitle()));
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage(), e);
+                }
             }
         }
 

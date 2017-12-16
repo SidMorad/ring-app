@@ -12,6 +12,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -35,6 +36,7 @@ public class BeaconListActivity extends AppCompatActivity {
     public static final int EXPECTED_RESULT_CODE = 2;
     private static final String TAG = "R.BeaconListActivity";
     private RingApp app;
+    private Button retryButton;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -54,6 +56,13 @@ public class BeaconListActivity extends AppCompatActivity {
                 intent.putExtra(BeaconDTO.MAC, beaconsAdapter.getItem(i).getMac());
                 intent.putExtra(BeaconDTO.TAG_NAME, beaconsAdapter.getItem(i).getTagName());
                 startActivity(intent);
+            }
+        });
+        retryButton = (Button) findViewById(R.id.retry);
+        retryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getBeacons();
             }
         });
         getBeacons();
@@ -94,11 +103,14 @@ public class BeaconListActivity extends AppCompatActivity {
         app.getBeaconsRepo().createBeacon(bModel, (ex) -> {
             if (ex == null) {
                 getBeacons();
+            } else {
+                Toast.makeText(this, ex.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
 
     private void getBeacons() {
+        hideRetryButton();
         app.getBeaconsRepo().getBeacons((beacons, ex) -> {
             if (ex == null) {
                 runOnUiThread(() -> {
@@ -108,6 +120,7 @@ public class BeaconListActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Error on getting beacon list", Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "Error on getting beacon list", ex);
+                showRetryButton();
             }
         });
     }
@@ -126,4 +139,13 @@ public class BeaconListActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+    private void hideRetryButton() {
+        retryButton.setVisibility(View.INVISIBLE);
+    }
+
+    private void showRetryButton() {
+        retryButton.setVisibility(View.VISIBLE);
+    }
+
 }

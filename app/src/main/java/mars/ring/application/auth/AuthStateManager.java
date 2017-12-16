@@ -87,7 +87,7 @@ public class AuthStateManager {
     public AuthState updateAfterAuthorization(
             @Nullable AuthorizationResponse response,
             @Nullable AuthorizationException ex) {
-        Log.i(TAG, "updateAfterAuthorization Response:" + response);
+        Log.i(TAG, "updateAfterAuthorization Response:" + response + " and Exception " + ex);
         AuthState current = getCurrent();
         current.update(response, ex);
         return replace(current);
@@ -98,7 +98,7 @@ public class AuthStateManager {
     public AuthState updateAfterTokenResponse(
             @Nullable TokenResponse response,
             @Nullable AuthorizationException ex) {
-        Log.i(TAG, "updateAfterTokenResponse Response: " + response);
+        Log.i(TAG, "updateAfterTokenResponse Response: " + response + " and Exception " + ex);
         AuthState current = getCurrent();
         current.update(response, ex);
         return replace(current);
@@ -109,7 +109,7 @@ public class AuthStateManager {
     public AuthState updateAfterRegistration(
             RegistrationResponse response,
             AuthorizationException ex) {
-        Log.i(TAG, "updateAfterRegisteration, Response: " + response);
+        Log.i(TAG, "updateAfterRegisteration, Response: " + response+ " and Exception " + ex);
         AuthState current = getCurrent();
         if (ex != null) {
             return current;

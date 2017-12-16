@@ -68,6 +68,7 @@ public class AuthRepo {
     }
 
     public boolean isAuthorized() {
+        Log.d(TAG, "isAuthorized: " + authStateManager.getCurrent().isAuthorized());
         return authStateManager.getCurrent().isAuthorized();
     }
 
@@ -118,9 +119,10 @@ public class AuthRepo {
 
     @WorkerThread
     // dangerous; do not call on UI thread.
-    private String getAccessToken() {
+    public String getAccessToken() {
         if (!isAuthorized()) {
             Log.w(TAG, "Want to get accessToken but is not authorized!");
+            login(loginListenerImpl);
             return null;
         }
 
@@ -186,7 +188,6 @@ public class AuthRepo {
                         .header("X-Android-Cert", app.getSignature())
                         .header("Authorization", "Bearer " + accessToken)
                         .build();
-                Log.i(TAG, "token: " + accessToken);
                 return chain.proceed(request);
             }
         };
@@ -292,4 +293,61 @@ public class AuthRepo {
     private void unlockLogins() {
         loginLock.release();
     }
+
+    private final AuthLoginListener loginListenerImpl =  new AuthLoginListener() {
+        public void onStart(AuthRepo repo, AuthEvent event) {
+            String description = event.getDescription();
+            Log.i(TAG, description);
+        }
+
+        public void onEvent(AuthRepo repo, AuthEvent event) {
+            String description = event.getDescription();
+            switch (event) {
+                case AUTH_SERVICE_DISCOVERY_START:
+                    Log.i(TAG, description);
+                    break;
+                case AUTH_SERVICE_DISCOVERY_FINISH:
+                    Log.i(TAG, description);
+                    break;
+                case AUTH_USER_AUTH_START:
+                    Log.i(TAG, description);
+                    break;
+                case AUTH_USER_AUTH_FINISH:
+                    Log.i(TAG, description);
+                    break;
+                case AUTH_CODE_EXCHANGE_START:
+                    Log.i(TAG, description);
+                    break;
+                case AUTH_CODE_EXCHANGE_FINISH:
+                    Log.i(TAG, description);
+                    break;
+                case AUTH_USER_INFO_START:
+                    Log.i(TAG, description);
+                    break;
+                case AUTH_USER_INFO_FINISH:
+                    Log.i(TAG, description);
+                    break;
+                default:
+                    Log.i(TAG, description);
+                    break;
+            }
+        }
+
+        public void onUserAgentRequest(AuthRepo repo, Intent intent) {
+
+            Log.i(TAG, "User Agent Request!");
+
+        }
+
+        public void onSuccess(AuthRepo repo, AuthEvent event) {
+            String description = event.getDescription();
+            Log.i(TAG, description);
+        }
+
+        public void onFailure(AuthRepo repo, AuthEvent event, AuthException ex) {
+            String description = event.getDescription() + ": " + ex.getMessage();
+            Log.w(TAG, description);
+        }
+    };
+
 }

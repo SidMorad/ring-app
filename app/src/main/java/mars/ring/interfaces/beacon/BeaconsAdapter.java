@@ -21,8 +21,10 @@ import mars.ring.domain.model.beacontag.Beacon;
 public class BeaconsAdapter extends BaseAdapter {
 
     ArrayList<Beacon> mBeacons = new ArrayList<Beacon>();
+    @Deprecated
     private static final long BEACON_LIFE_DURATION = 6000; // 6 seconds
 
+    @Deprecated // in favour of using Beacon Library
     public boolean validateAllBeacons() {
         boolean anythingChanged = false;
 
