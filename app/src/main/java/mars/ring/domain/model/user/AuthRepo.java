@@ -1,6 +1,7 @@
 package mars.ring.domain.model.user;
 
 import android.content.Intent;
+import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.support.customtabs.CustomTabsIntent;
@@ -27,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import mars.ring.application.RingApp;
 import mars.ring.application.auth.AuthStateManager;
 import mars.ring.application.auth.Configuration;
+import mars.ring.interfaces.auth.LoginActivity;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -72,27 +74,29 @@ public class AuthRepo {
         return authStateManager.getCurrent().isAuthorized();
     }
 
-    public void login(AuthLoginListener loginListener) {
+/*    public void login(AuthLoginListener loginListener) {
         Log.i(TAG, "login called");
         lockLogins();
+        Log.d(TAG, "login progress further #1");
         if(isAuthorized()) {
             unlockLogins();
             return;
         }
+        Log.d(TAG, "login progress further #2");
 
         this.loginListener = loginListener;
         loginListener.onStart(AuthRepo.this, AuthEvent.AUTH_LOGIN_START);
 
         if (!isConfigured()) {
-            Log.i(TAG, "Oops is not even configured!");
+            Log.w(TAG, "Oops is not even configured!");
 //            startServiceConfig();
         } else {
             startUserAuth();
         }
 
-    }
+    }*/
 
-    public void logout(AuthLogoutListener logoutListener) {
+/*    public void logout(AuthLogoutListener logoutListener) {
         lockLogins();
 
         if (!isAuthorized()) {
@@ -115,14 +119,13 @@ public class AuthRepo {
         }
         logoutListener.onSuccess(AuthRepo.this, AuthEvent.AUTH_LOGOUT_SUCCESS);
         unlockLogins();
-    }
+    }*/
 
-    @WorkerThread
-    // dangerous; do not call on UI thread.
     public String getAccessToken() {
         if (!isAuthorized()) {
             Log.w(TAG, "Want to get accessToken but is not authorized!");
-            login(loginListenerImpl);
+//            login(loginListenerImpl);
+            app.startActivity(new Intent(app, LoginActivity.class));
             return null;
         }
 
@@ -193,7 +196,7 @@ public class AuthRepo {
         };
     }
 
-    private void startUserAuth() {
+/*    private void startUserAuth() {
         Log.i(TAG, "Starting user auth");
 
         loginListener.onEvent(AuthRepo.this, AuthEvent.AUTH_USER_AUTH_START);
@@ -203,9 +206,9 @@ public class AuthRepo {
         CustomTabsIntent authIntent = intentBuilder.build();
         Intent intent = authService.getAuthorizationRequestIntent(authRequest, authIntent);
         loginListener.onUserAgentRequest(AuthRepo.this, intent);
-    }
+    }*/
 
-    public void notifyUserAgentResponse(Intent data, int returnCode) {
+/*    public void notifyUserAgentResponse(Intent data, int returnCode) {
         if (returnCode != RingApp.RC_AUTH) {
             failLogin(new AuthException("User authorization was cancelled"));
             return;
@@ -219,56 +222,56 @@ public class AuthRepo {
             authStateManager.updateAfterAuthorization(resp, ex);
             finishUserAuth();
         }
-    }
+    }*/
 
-    private void finishUserAuth() {
+/*    private void finishUserAuth() {
         Log.i(TAG, "Finishing user auth");
 
         loginListener.onEvent(AuthRepo.this, AuthEvent.AUTH_USER_AUTH_FINISH);
 
         startCodeExchange();
-    }
+    }*/
 
-    private void startCodeExchange() {
+/*    private void startCodeExchange() {
         Log.i(TAG, "Starting code exchange.");
         loginListener.onEvent(AuthRepo.this, AuthEvent.AUTH_CODE_EXCHANGE_START);
 
         AuthorizationResponse resp = authStateManager.getCurrent().getLastAuthorizationResponse();
         authService.performTokenRequest(resp.createTokenExchangeRequest(), this::onTokenRequestCompleted);
-    }
+    }*/
 
-    private void onTokenRequestCompleted(TokenResponse resp, AuthorizationException ex) {
+/*    private void onTokenRequestCompleted(TokenResponse resp, AuthorizationException ex) {
         if (resp == null) {
             failLogin(new AuthException(ex.getMessage()));
             return;
         }
         authStateManager.updateAfterTokenResponse(resp, ex);
         finishCodeExchange();
-    }
+    }*/
 
-    private void finishCodeExchange() {
+/*    private void finishCodeExchange() {
         Log.i(TAG, "Finishing code exchange");
 
         loginListener.onEvent(AuthRepo.this, AuthEvent.AUTH_CODE_EXCHANGE_FINISH);
-    }
+    }*/
 
-    private void failLogin(AuthException ex) {
+/*    private void failLogin(AuthException ex) {
         Log.i(TAG, "Failing login");
 
         loginListener.onFailure(AuthRepo.this, AuthEvent.AUTH_LOGIN_FAILURE, ex);
 
         unlockLogins();
-    }
+    }*/
 
-    private void finishLogin() {
+/*    private void finishLogin() {
         Log.i(TAG, "Finishing login");
 
         loginListener.onSuccess(AuthRepo.this, AuthEvent.AUTH_LOGIN_SUCCESS);
 
         unlockLogins();
-    }
+    }*/
 
-    private AuthorizationRequest createAuthRequest(@Nullable String loginHint) {
+/*    private AuthorizationRequest createAuthRequest(@Nullable String loginHint) {
         Log.i(TAG, "Creating auth request for login hint: " + loginHint);
         AuthorizationRequest.Builder authRequestBuilder = new AuthorizationRequest.Builder(
                 authStateManager.getCurrent().getAuthorizationServiceConfiguration(),
@@ -280,21 +283,21 @@ public class AuthRepo {
             authRequestBuilder.setLoginHint(loginHint);
         }
         return authRequestBuilder.build();
-    }
+    }*/
 
-    private void lockLogins() {
+/*    private void lockLogins() {
         try {
             loginLock.acquire();
         } catch (InterruptedException ex) {
             throw new RuntimeException("Unexpected interrupt", ex);
         }
-    }
+    }*/
 
-    private void unlockLogins() {
+/*    private void unlockLogins() {
         loginLock.release();
-    }
+    }*/
 
-    private final AuthLoginListener loginListenerImpl =  new AuthLoginListener() {
+/*    private final AuthLoginListener loginListenerImpl =  new AuthLoginListener() {
         public void onStart(AuthRepo repo, AuthEvent event) {
             String description = event.getDescription();
             Log.i(TAG, description);
@@ -348,6 +351,6 @@ public class AuthRepo {
             String description = event.getDescription() + ": " + ex.getMessage();
             Log.w(TAG, description);
         }
-    };
+    };*/
 
 }

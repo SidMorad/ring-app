@@ -20,6 +20,7 @@ public class Beacon {
     public Integer minor;
     public int txPower;         // reference power
     public int rssi;            // current RSSI
+    public int batteryLevel;
     public double distance;
     @Deprecated
     public String arguments;    // string representing arguments inside AltBeacon
@@ -43,12 +44,13 @@ public class Beacon {
     public Beacon() {}
 
     public Beacon(org.altbeacon.beacon.Beacon b) {
+        id = b.getBluetoothAddress();
         uuid = b.getId1().toString();
         major = b.getId2().toInt();
         minor = b.getId3().toInt();
         txPower = b.getTxPower();
         rssi = b.getRssi();
-        id = b.getBluetoothAddress();
+//      batteryLevel = (int) (long) b.getDataFields().get(0);
         distance = b.getDistance();
     }
 

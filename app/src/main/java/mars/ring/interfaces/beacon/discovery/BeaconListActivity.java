@@ -64,7 +64,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
                 resultIntent.putExtra(BeaconDTO.MAJOR, mAdapter.getItem(i).major);
                 resultIntent.putExtra(BeaconDTO.MINOR, mAdapter.getItem(i).minor);
                 resultIntent.putExtra(BeaconDTO.TX_POWER, mAdapter.getItem(i).txPower);
-//                resultIntent.putExtra(BeaconDTO.BATTERY_LEVEL, mAdapter.getItem(i).batteryLevel);
+                resultIntent.putExtra(BeaconDTO.BATTERY_LEVEL, mAdapter.getItem(i).batteryLevel);
                 setResult(Activity.RESULT_OK, resultIntent);
                 finish();
             }
