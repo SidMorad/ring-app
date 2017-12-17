@@ -83,7 +83,8 @@ public final class LoginActivity extends AppCompatActivity {
                 && !mConfiguration.hasConfigurationChanged()) {
             Log.i(TAG, "User is already authenticated, proceeding to main activity");
             Intent intent = new Intent(this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_TASK_ON_HOME);
             startActivity(intent);
             finish();
             return;
@@ -158,8 +159,10 @@ public final class LoginActivity extends AppCompatActivity {
             }
             Intent intent = new Intent(this, MainActivity.class);
             intent.putExtras(data.getExtras());
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_TASK_ON_HOME);
             startActivity(intent);
+            finish();
         }
     }
 
