@@ -58,6 +58,8 @@ public class AuthRepo {
         return authStateManager.getCurrent().isAuthorized();
     }
 
+    int accessTokenFailureCount = 0;
+
     @WorkerThread
     public String getAccessToken() {
         if (!isAuthorized()) {
@@ -70,9 +72,14 @@ public class AuthRepo {
                 (String authToken, String idToken, AuthorizationException ex) -> {
             if (ex != null) {
                 Log.e(TAG, "performActionWithFreshTokens throw exception: ", ex);
-                refreshAccessToken();
+                accessTokenFailureCount++;
+                if (accessTokenFailureCount > 3) {
+                    refreshAccessToken();
+                    accessTokenFailureCount = 0;
+                }
             } else {
                 accessToken = authToken;
+                accessTokenFailureCount = 0;
             }
         });
 
@@ -119,11 +126,10 @@ public class AuthRepo {
             @Override
             public Response intercept(Chain chain) throws IOException {
                 Request request = chain.request();
-                String accessToken = getAccessToken();
                 request = request.newBuilder()
                         .header("X-Android-Package", app.getPackageName())
                         .header("X-Android-Cert", app.getSignature())
-                        .header("Authorization", "Bearer " + accessToken)
+                        .header("Authorization", "Bearer " + getAccessToken())
                         .build();
                 return chain.proceed(request);
             }
@@ -143,7 +149,7 @@ public class AuthRepo {
                 while(!responseOk && tryCount < 2) {
                     try {
                         if (responseCode == 401) {  // Here we check if error code is 401, if yes then we try one more time with new access token
-                            request = request.newBuilder().header("Authorization", "Bearer " + accessToken).build();
+                            request = request.newBuilder().header("Authorization", "Bearer " + getAccessToken()).build();
                         } else if (responseCode == 0) {
                         } else {
                             tryCount++;

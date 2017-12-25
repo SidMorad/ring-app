@@ -21,7 +21,7 @@ import net.openid.appauth.AuthState;
 import mars.ring.R;
 import mars.ring.domain.model.user.AuthStateManager;
 import mars.ring.interfaces.auth.LoginActivity;
-import mars.ring.interfaces.beacon.registered.BeaconListActivity;
+import mars.ring.interfaces.beacontag.BeaconTagActivity;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void goToBeaconListActivity(View view) {
-        Intent intent = new Intent(MainActivity.this, BeaconListActivity.class);
+        Intent intent = new Intent(MainActivity.this, BeaconTagActivity.class);
         startActivity(intent);
     }
 

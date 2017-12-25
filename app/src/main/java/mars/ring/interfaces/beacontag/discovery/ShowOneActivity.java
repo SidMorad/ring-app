@@ -1,8 +1,7 @@
-package mars.ring.interfaces.beacon.discovery;
+package mars.ring.interfaces.beacontag.discovery;
 
 import android.Manifest;
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
@@ -14,8 +13,6 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -29,7 +26,7 @@ import java.util.Collection;
 import mars.ring.R;
 import mars.ring.domain.model.beacontag.Beacon;
 import mars.ring.domain.model.beacontag.BeaconDTO;
-import mars.ring.interfaces.beacon.BeaconsAdapter;
+import mars.ring.interfaces.beacontag.BeaconsAdapter;
 
 /**
  * Created by developer on 14/12/17.

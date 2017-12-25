@@ -1,4 +1,4 @@
-package mars.ring.interfaces.beacon.discovery;
+package mars.ring.interfaces.beacontag.discovery;
 
 import android.Manifest;
 import android.annotation.TargetApi;
@@ -21,7 +21,6 @@ import android.widget.TextView;
 
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
-import org.altbeacon.beacon.BeaconParser;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
@@ -30,7 +29,7 @@ import java.util.Collection;
 import mars.ring.R;
 import mars.ring.domain.model.beacontag.Beacon;
 import mars.ring.domain.model.beacontag.BeaconDTO;
-import mars.ring.interfaces.beacon.BeaconsAdapter;
+import mars.ring.interfaces.beacontag.BeaconsAdapter;
 
 /**
  * BeaconListActivty a class that shows list of (known/unknown)beacons.
@@ -43,7 +42,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
     final private BeaconsAdapter mAdapter = new BeaconsAdapter();
     private BeaconManager beaconManager;
 
-    private static final String TAG = "D.BeaconListActivity";
+    private static final String TAG = "D.BeaconTagActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

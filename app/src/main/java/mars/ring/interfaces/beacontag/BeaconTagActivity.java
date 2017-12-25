@@ -1,10 +1,13 @@
-package mars.ring.interfaces.beacon.registered;
+package mars.ring.interfaces.beacontag;
 
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.BottomNavigationView;
+import android.support.design.widget.NavigationView;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -21,26 +24,27 @@ import android.widget.Toast;
 import mars.ring.R;
 import mars.ring.application.RingApp;
 import mars.ring.domain.model.beacontag.BeaconDTO;
-import mars.ring.interfaces.beacon.discovery.ShowOneActivity;
+import mars.ring.interfaces.beacontag.discovery.ShowOneActivity;
 
 /**
- * BeaconListActivity that displays list of registered beacons.
+ * BeaconTagActivity that displays list of registered beacons.
  *
  * Created by a developer on 21/11/17.
  */
 
-public class BeaconListActivity extends AppCompatActivity {
+public class BeaconTagActivity extends AppCompatActivity implements
+        BottomNavigationView.OnNavigationItemSelectedListener {
 
     private final BeaconModelAdapter beaconsAdapter = new BeaconModelAdapter();
     public static final int EXPECTED_RESULT_CODE = 2;
-    private static final String TAG = "R.BeaconListActivity";
+    private static final String TAG = "R.BeaconTagActivity";
     private RingApp app;
     private Button retryButton;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.registered_beacon_list);
+        setContentView(R.layout.beacon_tag_activity);
 
         app = (RingApp) getApplication();
 
@@ -51,7 +55,7 @@ public class BeaconListActivity extends AppCompatActivity {
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Intent intent = new Intent(BeaconListActivity.this, ShowOneActivity.class);
+                Intent intent = new Intent(BeaconTagActivity.this, ShowOneActivity.class);
                 intent.putExtra(BeaconDTO.MAC, beaconsAdapter.getItem(i).getMac());
                 intent.putExtra(BeaconDTO.TAG_NAME, beaconsAdapter.getItem(i).getTagName());
                 startActivity(intent);
@@ -65,6 +69,9 @@ public class BeaconListActivity extends AppCompatActivity {
             }
         });
         getBeacons();
+
+        BottomNavigationView tabView = (BottomNavigationView) findViewById(R.id.navigation);
+        tabView.setOnNavigationItemSelectedListener(this);
     }
 
     @Override
@@ -133,10 +140,26 @@ public class BeaconListActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (R.id.add_new_item == item.getItemId()) {
-            startActivityForResult(new Intent(this, mars.ring.interfaces.beacon.discovery.BeaconListActivity.class), EXPECTED_RESULT_CODE);
+            startActivityForResult(new Intent(this, mars.ring.interfaces.beacontag.discovery.BeaconListActivity.class), EXPECTED_RESULT_CODE);
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.navigation_beacon_list:
+                setTitle(getString(R.string.tag_list));
+                return true;
+            case R.id.navigation_beacon_map:
+                setTitle(getString(R.string.tag_locations));
+                return true;
+            case R.id.navigation_notifications:
+                setTitle(getString(R.string.tag_notifications));
+                return true;
+        }
+        return false;
     }
 
     private void hideRetryButton() {

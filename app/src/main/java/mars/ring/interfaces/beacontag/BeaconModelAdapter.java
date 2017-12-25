@@ -1,4 +1,4 @@
-package mars.ring.interfaces.beacon.registered;
+package mars.ring.interfaces.beacontag;
 
 import android.view.View;
 import android.view.ViewGroup;

@@ -34,13 +34,13 @@
             android:name=".interfaces.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
-        <activity android:name=".interfaces.beacon.discovery.BeaconListActivity"
+        <activity android:name=".interfaces.beacontag.discovery.BeaconListActivity"
             android:label="@string/register_a_tag">
         </activity>
-        <activity android:name=".interfaces.beacon.discovery.ShowOneActivity"
+        <activity android:name=".interfaces.beacontag.discovery.ShowOneActivity"
             android:label="Distance to">
         </activity>
-        <activity android:name=".interfaces.beacon.registered.BeaconListActivity"
+        <activity android:name=".interfaces.beacontag.BeaconTagActivity"
             android:label="@string/tag_list">
         </activity>
 

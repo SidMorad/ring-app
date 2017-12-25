@@ -1,4 +1,4 @@
-package mars.ring.interfaces.beacon;
+package mars.ring.interfaces.beacontag;
 
 import android.util.Log;
 import android.view.View;
