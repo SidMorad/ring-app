@@ -33,16 +33,15 @@ import net.openid.appauth.TokenResponse;
 import net.openid.appauth.browser.AnyBrowserMatcher;
 import net.openid.appauth.browser.BrowserMatcher;
 
-import org.json.JSONObject;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 import mars.ring.R;
-import mars.ring.application.auth.AuthStateManager;
-import mars.ring.application.auth.Configuration;
+import mars.ring.application.RingApp;
+import mars.ring.domain.model.user.AuthStateManager;
+import mars.ring.domain.model.user.Configuration;
 import mars.ring.interfaces.MainActivity;
 
 /**
@@ -55,16 +54,17 @@ public final class LoginActivity extends AppCompatActivity {
     private static final String EXTRA_FAILED = "failed";
     private static final int RC_AUTH = 100;
 
+    private RingApp app;
+
     private AuthorizationService mAuthService;
     private AuthStateManager mAuthStateManager;
     private Configuration mConfiguration;
-
 
     private final AtomicReference<String> mClientId = new AtomicReference<>();
     private final AtomicReference<AuthorizationRequest> mAuthRequest = new AtomicReference<>();
     private final AtomicReference<CustomTabsIntent> mAuthIntent = new AtomicReference<>();
     private CountDownLatch mAuthIntentLatch = new CountDownLatch(1);
-    private final AtomicReference<JSONObject> mUserInfoJson = new AtomicReference<>();
+//    private final AtomicReference<JSONObject> mUserInfoJson = new AtomicReference<>();
     private ExecutorService mExecutor;
 
     @NonNull
@@ -74,6 +74,8 @@ public final class LoginActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        app = (RingApp) getApplication();
 
         mExecutor = Executors.newSingleThreadExecutor();
         mAuthStateManager = AuthStateManager.getInstance(this);
@@ -101,7 +103,7 @@ public final class LoginActivity extends AppCompatActivity {
             return;
         }
         if (mConfiguration.hasConfigurationChanged()) {
-            Log.i(TAG, "Configuration change detected, disacrding old state");
+            Log.i(TAG, "Configuration change detected, discarding old state");
             mAuthStateManager.replace(new AuthState());
             mConfiguration.acceptConfiguration();
         }
@@ -110,7 +112,7 @@ public final class LoginActivity extends AppCompatActivity {
             displayAuthCancelled();
         }
 
-        displayLoading("Initializaing");
+        displayLoading("Initializing");
         mExecutor.submit(this::initializeAppAuth);
     }
 
@@ -180,7 +182,7 @@ public final class LoginActivity extends AppCompatActivity {
 
         if(mAuthStateManager.getCurrent().getAuthorizationServiceConfiguration() != null) {
             Log.i(TAG, "auth config already established");
-            initalizeClient();
+            initializeClient();
             return;
         }
 
@@ -193,13 +195,13 @@ public final class LoginActivity extends AppCompatActivity {
                     mConfiguration.getRegistrationEndpointUri());
 
             mAuthStateManager.replace(new AuthState(config));
-            initalizeClient();
+            initializeClient();
             return;
         }
     }
 
     @WorkerThread
-    private void initalizeClient() {
+    private void initializeClient() {
         if (mConfiguration.getClientId() != null) {
             Log.i(TAG, "Using static client ID: " + mConfiguration.getClientId());
             mClientId.set(mConfiguration.getClientId());
@@ -213,7 +215,7 @@ public final class LoginActivity extends AppCompatActivity {
         try {
             mAuthIntentLatch.await();
         } catch (InterruptedException e) {
-            Log.w(TAG, "Interuppted while waiting for auth intent");
+            Log.w(TAG, "Interrupted while waiting for auth intent");
         }
 
         Intent intent = mAuthService.getAuthorizationRequestIntent(

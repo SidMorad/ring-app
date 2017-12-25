@@ -21,7 +21,6 @@ import android.widget.Toast;
 import mars.ring.R;
 import mars.ring.application.RingApp;
 import mars.ring.domain.model.beacontag.BeaconDTO;
-import mars.ring.interfaces.beacon.BeaconModelAdapter;
 import mars.ring.interfaces.beacon.discovery.ShowOneActivity;
 
 /**

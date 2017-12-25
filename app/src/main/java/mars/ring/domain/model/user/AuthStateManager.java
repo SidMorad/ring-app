@@ -1,4 +1,4 @@
-package mars.ring.application.auth;
+package mars.ring.domain.model.user;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * AuthStateManager a persistance mechanism for an {@link AuthState} instance.
- * This stores the instance in a shared preferences file, and provides thead-safe access and mutation.
+ * AuthStateManager a storage mechanism for an {@link AuthState} instance.
+ * This stores the instance in a shared preferences file, and provides thread-safe access and mutation.
  *
  * Created by developer on 07/12/17.
  */
@@ -109,7 +109,7 @@ public class AuthStateManager {
     public AuthState updateAfterRegistration(
             RegistrationResponse response,
             AuthorizationException ex) {
-        Log.i(TAG, "updateAfterRegisteration, Response: " + response+ " and Exception " + ex);
+        Log.i(TAG, "updateAfterRegistration, Response: " + response+ " and Exception " + ex);
         AuthState current = getCurrent();
         if (ex != null) {
             return current;

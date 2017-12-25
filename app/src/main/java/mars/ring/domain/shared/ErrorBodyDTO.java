@@ -1,10 +1,10 @@
-package mars.ring.application.util;
+package mars.ring.domain.shared;
 
 /**
  * Created by developer on 16/12/17.
  */
 
-public class ErrorBody {
+public class ErrorBodyDTO {
 
     String title;
 

@@ -1,4 +1,4 @@
-package mars.ring.application.auth;
+package mars.ring.domain.model.user;
 
 import android.content.Context;
 import android.content.Intent;

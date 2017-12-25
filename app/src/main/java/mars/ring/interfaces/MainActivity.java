@@ -14,13 +14,12 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import net.openid.appauth.AuthState;
 
 import mars.ring.R;
-import mars.ring.application.auth.AuthStateManager;
+import mars.ring.domain.model.user.AuthStateManager;
 import mars.ring.interfaces.auth.LoginActivity;
 import mars.ring.interfaces.beacon.registered.BeaconListActivity;
 

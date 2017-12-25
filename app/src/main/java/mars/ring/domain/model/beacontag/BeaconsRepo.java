@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import mars.ring.application.RingApp;
-import mars.ring.application.util.ErrorBody;
+import mars.ring.domain.shared.ErrorBodyDTO;
 import mars.ring.domain.model.user.AuthRepo;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -45,6 +45,7 @@ public class BeaconsRepo {
 
         OkHttpClient.Builder clientBuilder = new OkHttpClient().newBuilder();
         clientBuilder.addInterceptor(authRepo.getAccessTokenInterceptor());
+        clientBuilder.addInterceptor(authRepo.getAccessTokenRetryInterceptor());
         clientBuilder.addInterceptor(logger);
         clientBuilder.connectTimeout(30, TimeUnit.SECONDS);
         clientBuilder.readTimeout(30, TimeUnit.SECONDS);
@@ -84,7 +85,7 @@ public class BeaconsRepo {
                 try {
                     String errorBody = response.errorBody().string();
                     Log.w(TAG, errorBody);
-                    ErrorBody error = new Gson().fromJson(errorBody, ErrorBody.class);
+                    ErrorBodyDTO error = new Gson().fromJson(errorBody, ErrorBodyDTO.class);
                     callback.call(new Exception(error.getTitle()));
                 } catch (IOException e) {
                     Log.e(TAG, e.getMessage(), e);
@@ -110,7 +111,7 @@ public class BeaconsRepo {
                 List<BeaconDTO> result = response.body();
                 callback.call(result, null);
             } else {
-                callback.call(Collections.emptyList(), new Exception("Invalid response"));
+                callback.call(Collections.emptyList(), new Exception("Response failed: " + response.code()));
             }
         }
 

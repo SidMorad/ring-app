@@ -59,6 +59,10 @@ public final class RingApp extends android.app.Application {
         return authRepo;
     }
 
+    public AuthRepo auth() {
+        return authRepo;
+    }
+
     public BeaconsRepo getBeaconsRepo() {
         return beaconsRepo;
     }
@@ -89,7 +93,7 @@ public final class RingApp extends android.app.Application {
         }
     }
 
-    public int getColorValue(@ColorRes int color) {
+    public int getColorCompat(@ColorRes int color) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             return getColor(color);
         } else {
