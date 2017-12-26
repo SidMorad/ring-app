@@ -73,9 +73,8 @@ public class BeaconModelAdapter extends BaseAdapter {
         public void updateAccordingToBeacon(final BeaconDTO beacon) {
             text1.setText(beacon.getTagName());
             String secondLine = String.format(
-                    "TxPower: %s",
-//                  beacon.getBatteryLevel(),
-                    beacon.getTxPower());
+                    "Tag Identifier: %s",
+                    beacon.identifierHashCode());
             text2.setText(secondLine);
         }
     }

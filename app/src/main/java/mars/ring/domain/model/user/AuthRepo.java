@@ -1,6 +1,7 @@
 package mars.ring.domain.model.user;
 
 import android.content.Intent;
+import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
@@ -71,7 +72,7 @@ public class AuthRepo {
         authStateManager.getCurrent().performActionWithFreshTokens(authService,
                 (String authToken, String idToken, AuthorizationException ex) -> {
             if (ex != null) {
-                Log.e(TAG, "performActionWithFreshTokens throw exception: ", ex);
+                Log.e(TAG, "performActionWithFreshTokens throw exception: " + accessTokenFailureCount, ex);
                 accessTokenFailureCount++;
                 if (accessTokenFailureCount > 3) {
                     refreshAccessToken();
@@ -87,7 +88,7 @@ public class AuthRepo {
     }
 
 
-    @WorkerThread
+    @MainThread
     private void refreshAccessToken() {
         Log.i(TAG,"RefreshAccessToken occoured");
         performTokenRequest(
@@ -95,7 +96,7 @@ public class AuthRepo {
                 this::handleAccessTokenResponse);
     }
 
-    @WorkerThread
+    @MainThread
     private void performTokenRequest(
             TokenRequest request,
             AuthorizationService.TokenResponseCallback callback) {

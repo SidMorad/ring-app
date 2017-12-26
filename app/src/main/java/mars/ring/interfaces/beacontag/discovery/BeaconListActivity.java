@@ -32,7 +32,7 @@ import mars.ring.domain.model.beacontag.BeaconDTO;
 import mars.ring.interfaces.beacontag.BeaconsAdapter;
 
 /**
- * BeaconListActivty a class that shows list of (known/unknown)beacons.
+ * BeaconListActivity a class that shows list of (known/unknown)beacons.
  *
  * Created by a developer on 23/10/17.
  */
@@ -42,7 +42,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
     final private BeaconsAdapter mAdapter = new BeaconsAdapter();
     private BeaconManager beaconManager;
 
-    private static final String TAG = "D.BeaconTagActivity";
+    private static final String TAG = BeaconListActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +58,8 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Log.d(TAG, "onItemClick: " + i + ": " + l + " view: " + view + " data: " + mAdapter.getItem(i));
                 Intent resultIntent = new Intent();
-                resultIntent.putExtra(BeaconDTO.MAC, mAdapter.getItem(i).id);
-                resultIntent.putExtra(BeaconDTO.IDENTIFIER, mAdapter.getItem(i).uuid);
+                resultIntent.putExtra(BeaconDTO.MAC, mAdapter.getItem(i).mac);
+                resultIntent.putExtra(BeaconDTO.IDENTIFIER, mAdapter.getItem(i).identifier);
                 resultIntent.putExtra(BeaconDTO.MAJOR, mAdapter.getItem(i).major);
                 resultIntent.putExtra(BeaconDTO.MINOR, mAdapter.getItem(i).minor);
                 resultIntent.putExtra(BeaconDTO.TX_POWER, mAdapter.getItem(i).txPower);
@@ -90,7 +90,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
 
     @Override
     public void didRangeBeaconsInRegion(final Collection<org.altbeacon.beacon.Beacon> beacons, Region region) {
-        Log.d(TAG, "didRangeBeaconsInRegion event occured! " + beacons.size() + " " + region.getUniqueId());
+        Log.d(TAG, "didRangeBeaconsInRegion event occurred! " + beacons.size() + " " + region.getUniqueId());
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

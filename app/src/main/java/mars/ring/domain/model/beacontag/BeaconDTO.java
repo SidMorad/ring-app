@@ -2,6 +2,8 @@ package mars.ring.domain.model.beacontag;
 
 import android.content.Intent;
 
+import com.google.common.hash.HashCode;
+
 /**
  * Created by developer on 12/12/17.
  */
@@ -34,6 +36,14 @@ public class BeaconDTO {
         this.mac = data.getStringExtra(MAC);
         this.batteryLevel = data.getIntExtra(BATTERY_LEVEL, 100);
         this.txPower = data.getIntExtra(TX_POWER, 0);
+    }
+
+    public int identifierHashCode() {
+        return Math.abs((mac + identifier + major + minor).hashCode());
+    }
+
+    public int hashCode() {
+        return mac.hashCode();
     }
 
     public Long getId() {

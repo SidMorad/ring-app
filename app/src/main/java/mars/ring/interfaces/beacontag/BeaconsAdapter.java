@@ -68,7 +68,7 @@ public class BeaconsAdapter extends BaseAdapter {
 
     public Beacon findBeaconWithId(final String id) {
         for (final Beacon beacon: mBeacons) {
-            if (beacon.id.equals(id)) return beacon;
+            if (beacon.mac.equals(id)) return beacon;
         }
         return null;
     }
@@ -103,8 +103,8 @@ public class BeaconsAdapter extends BaseAdapter {
         public void updateAccordingToBeacon(final Beacon beacon) {
             text1.setText(beacon.distance());
             String secondLine = String.format(
-                    "TxPower: %d, rssi: %d",
-                    beacon.txPower,
+                    "Identifier: %d, rssi: %d",
+                    beacon.identifierHashCode(),
                     beacon.rssi);
             text2.setText(secondLine);
         }

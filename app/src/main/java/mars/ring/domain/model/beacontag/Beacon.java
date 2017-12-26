@@ -15,7 +15,7 @@ import java.util.Date;
  */
 
 public class Beacon {
-    public String uuid;         // UUID of beacon
+    public String identifier;         // UUID of beacon
     public Integer major;
     public Integer minor;
     public int txPower;         // reference power
@@ -26,7 +26,7 @@ public class Beacon {
     public String arguments;    // string representing arguments inside AltBeacon
 
     public long timestamp;      // timestamp when this beacon was last time scanned
-    public String id;           // ID of the beacon, in case of android it will be BT MAC address
+    public String mac;           // ID of the beacon, in case of android it will be BT MAC address
 
     private static final int PROTOCOL_OFFSET = 3;
     private static final int AD_LENGTH_INDEX = PROTOCOL_OFFSET;
@@ -44,8 +44,8 @@ public class Beacon {
     public Beacon() {}
 
     public Beacon(org.altbeacon.beacon.Beacon b) {
-        id = b.getBluetoothAddress();
-        uuid = b.getId1().toString();
+        mac = b.getBluetoothAddress();
+        identifier = b.getId1().toString();
         major = b.getId2().toInt();
         minor = b.getId3().toInt();
         txPower = b.getTxPower();
@@ -55,8 +55,8 @@ public class Beacon {
     }
 
     public Beacon(Beacon other) {
-        id = other.id;
-        uuid = other.uuid;
+        mac = other.mac;
+        identifier = other.identifier;
         major = other.major;
         minor = other.minor;
         txPower = other.txPower;
@@ -96,12 +96,16 @@ public class Beacon {
         return df.format(distance);
     }
 
+    public int identifierHashCode() {
+        return Math.abs((mac + identifier + major + minor).hashCode());
+    }
+
     @Deprecated // in in favour of using Beacon Library
     public void updateFrom(final BluetoothDevice device,
                            final int rssi,
                            final byte[] advertisement) {
         this.rssi = rssi;
-        this.id = device.getAddress();
+        this.mac = device.getAddress();
         this.timestamp = new Date().getTime();
         this.txPower = (int) advertisement[TXPOWER_INDEX];
         this.arguments = String.format("arg1: %02x %02x  arg2: %02x %02x",
@@ -117,7 +121,7 @@ public class Beacon {
                 sb.append("-");
             }
         }
-        this.uuid = sb.toString();
+        this.identifier = sb.toString();
     }
 
 }
