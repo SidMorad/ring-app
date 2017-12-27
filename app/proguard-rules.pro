@@ -23,3 +23,37 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+
+-keep class mars.ring.** { *; }
+-dontnote mars.ring.**
+
+# Retrofit
+-keepattributes Signature
+-keepattributes Exceptions
+-dontwarn okio.**
+-dontwarn javax.annotation.**
+-dontwarn retrofit2.Platform$Java8
+-dontnote retrofit2.Platform
+
+# OkHttp3
+-dontwarn okhttp3.**
+-dontnote okhttp3.**
+
+-dontnote sun.misc.Unsafe
+-dontnote com.google.gson.internal.UnsafeAllocator
+
+# Guava
+-keep class com.google.gson.reflect.TypeToken
+-dontwarn sun.misc.Unsafe
+-dontwarn javax.lang.model.element.Modifier
+-dontnote com.google.appengine.api.**
+-dontnote com.google.apphosting.api.**
+
+# AltBeacon library
+-dontnote org.altbeacon.beacon.SimulatedScanData
+
+# Other
+-dontnote android.net.http.*
+-dontnote org.apache.http.**
+-dontwarn java.lang.ClassValue
