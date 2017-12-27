@@ -3,8 +3,6 @@ package mars.ring.application;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
-import android.support.annotation.ColorRes;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 
@@ -29,10 +27,14 @@ import mars.ring.domain.model.beacontag.BeaconsRepo;
 
 public final class RingApp extends android.app.Application implements BootstrapNotifier {
 
+    private static final String TAG = RingApp.class.getSimpleName();
+
     public final static int RC_FAIL = 0;
     public final static int RC_AUTH = 100;
 
     public static boolean offline = false;
+    public static final long backgroundBetweenScanPeriod = 3600000L; // the time between each scan to be 1 hour (3600 seconds)
+    public static final long foregroundBetweenScanPeriod = 3600000l; // for now same as background
 
     private AuthRepo authRepo;
     private BeaconsRepo beaconsRepo;
@@ -40,8 +42,6 @@ public final class RingApp extends android.app.Application implements BootstrapN
     private RegionBootstrap regionBootstrap;
     private BackgroundPowerSaver backgroundPowerSaver;
     private boolean haveDetectedBeaconsSinceBoot = false;
-
-    private static final String TAG = RingApp.class.getSimpleName();
 
     @Override
     public void onCreate() {
@@ -67,8 +67,8 @@ public final class RingApp extends android.app.Application implements BootstrapN
         backgroundPowerSaver = new BackgroundPowerSaver(this);
         // An example of rather extreme battery saving configuration
 //        beaconManager.setBackgroundScanPeriod(1100l);   // set duration of the scan be to be 1.1 seconds
-//        beaconManager.setBackgroundBetweenScanPeriod(3600000l); // set the time between each scan to be 1 hour (3600 seconds)
-
+        beaconManager.setBackgroundBetweenScanPeriod(backgroundBetweenScanPeriod);
+        beaconManager.setForegroundBetweenScanPeriod(foregroundBetweenScanPeriod);
     }
 
     @Override
@@ -132,10 +132,6 @@ public final class RingApp extends android.app.Application implements BootstrapN
         } catch (NoSuchAlgorithmException e) {
             return null;
         }
-    }
-
-    public int getColorCompat(@ColorRes int color) {
-        return ContextCompat.getColor(RingApp.this, color);
     }
 
 }

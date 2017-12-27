@@ -24,6 +24,7 @@ import org.altbeacon.beacon.Region;
 import java.util.Collection;
 
 import mars.ring.R;
+import mars.ring.application.RingApp;
 import mars.ring.domain.model.beacontag.Beacon;
 import mars.ring.domain.model.beacontag.BeaconDTO;
 import mars.ring.interfaces.beacontag.BeaconsAdapter;
@@ -67,7 +68,7 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
     public void onBeaconServiceConnect() {
         beaconManager.addRangeNotifier(this);
         try {
-            beaconManager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
+            beaconManager.startRangingBeaconsInRegion(new Region("showOnlyThisBeacon", null, null, null));
         } catch (RemoteException e) {
             Log.e(TAG, "onStartRangingBeaconsInRegion", e);
         }
@@ -126,6 +127,7 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
         super.onResume();
         if (beaconManager.isBound(this)) {
             beaconManager.setBackgroundMode(false);
+            beaconManager.setForegroundBetweenScanPeriod(0l);
         }
     }
 
@@ -134,6 +136,7 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
         super.onPause();
         if (beaconManager.isBound(this)) {
             beaconManager.setBackgroundMode(true);
+            beaconManager.setForegroundBetweenScanPeriod(RingApp.foregroundBetweenScanPeriod);
         }
     }
 

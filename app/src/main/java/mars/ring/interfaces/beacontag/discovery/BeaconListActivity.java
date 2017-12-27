@@ -27,6 +27,7 @@ import org.altbeacon.beacon.Region;
 import java.util.Collection;
 
 import mars.ring.R;
+import mars.ring.application.RingApp;
 import mars.ring.domain.model.beacontag.Beacon;
 import mars.ring.domain.model.beacontag.BeaconDTO;
 import mars.ring.interfaces.beacontag.BeaconsAdapter;
@@ -132,6 +133,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
         super.onResume();
         if (beaconManager.isBound(this)) {
             beaconManager.setBackgroundMode(false);
+            beaconManager.setForegroundBetweenScanPeriod(0l);
         }
     }
 
@@ -140,6 +142,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
         super.onPause();
         if (beaconManager.isBound(this)) {
             beaconManager.setBackgroundMode(true);
+            beaconManager.setForegroundBetweenScanPeriod(RingApp.foregroundBetweenScanPeriod);
         }
     }
 

@@ -43,6 +43,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
     private RingApp app;
     private BeaconListStorage beaconListStorage;
     private Button retryButton;
+    private Menu mMenu;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -143,6 +144,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
+        this.mMenu = menu;
         return true;
     }
 
@@ -159,16 +161,31 @@ public class BeaconTagActivity extends AppCompatActivity implements
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.navigation_beacon_list:
-                setTitle(getString(R.string.my_tags));
+                showList();
                 return true;
             case R.id.navigation_beacon_map:
-                setTitle(getString(R.string.tag_locations));
+                showMap();
                 return true;
             case R.id.navigation_notifications:
-                setTitle(getString(R.string.tag_notifications));
+                showNotifications();
                 return true;
         }
         return false;
+    }
+
+    public void showList() {
+        setTitle(getString(R.string.my_tags));
+        getMenuInflater().inflate(R.menu.menu, mMenu);
+    }
+
+    public void showMap() {
+        setTitle(getString(R.string.tag_locations));
+        mMenu.clear();
+    }
+
+    public void showNotifications() {
+        setTitle(getString(R.string.tag_notifications));
+        mMenu.clear();
     }
 
     private void hideRetryButton() {
