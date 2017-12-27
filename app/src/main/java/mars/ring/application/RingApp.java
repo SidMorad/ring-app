@@ -3,7 +3,6 @@ package mars.ring.application;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
-import android.os.Build;
 import android.support.annotation.ColorRes;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatDelegate;
@@ -32,6 +31,8 @@ public final class RingApp extends android.app.Application implements BootstrapN
 
     public final static int RC_FAIL = 0;
     public final static int RC_AUTH = 100;
+
+    public static boolean offline = false;
 
     private AuthRepo authRepo;
     private BeaconsRepo beaconsRepo;
@@ -89,6 +90,10 @@ public final class RingApp extends android.app.Application implements BootstrapN
     public void didDetermineStateForRegion(int state, Region region) {
         Log.d(TAG, "I have just switched from seeing/not seeing beacons: " + state);
         Log.d(TAG, "Region was " + region.toString());
+    }
+
+    public static boolean isOnline() {
+        return !offline;
     }
 
     public AuthRepo getAuthRepo() {

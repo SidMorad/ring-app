@@ -74,24 +74,25 @@
                 <Button
                     android:id="@+id/start_auth"
                     style="@style/Widget.AppCompat.Button.Colored"
-                    android:text="@string/login"
+                    android:text="@string/start"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"/>
 
-<!--
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="@string/browser_selector_label"
-                    android:labelFor="@+id/browser_selector"/>
+                    android:text=""/>
 
-                <Spinner
-                    android:id="@+id/browser_selector"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
--->
+                <Button
+                    android:id="@+id/start_offline"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:text="@string/offline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"/>
+
 
             </LinearLayout>
 

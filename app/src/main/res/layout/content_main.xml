@@ -9,9 +9,9 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Tag"
+        android:text="@string/my_tags"
         android:onClick="goToBeaconListActivity"
-        android:drawableLeft="@android:drawable/ic_menu_search"
+        android:drawableTop="@drawable/ic_my_tags_black_24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

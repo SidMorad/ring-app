@@ -41,7 +41,7 @@
             android:label="Distance to">
         </activity>
         <activity android:name=".interfaces.beacontag.BeaconTagActivity"
-            android:label="@string/tag_list">
+            android:label="@string/my_tags">
         </activity>
 
         <activity android:name="net.openid.appauth.RedirectUriReceiverActivity">

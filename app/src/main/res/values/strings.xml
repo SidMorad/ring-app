@@ -1,10 +1,12 @@
 <resources>
     <string name="app_name">Ring</string>
-    <string name="ring_logo_content_description">Ring, bring on</string>
+    <string name="ring_logo_content_description">Ring, brings together</string>
     <string name="login">Login</string>
+    <string name="start">Start</string>
+    <string name="offline">Offline</string>
     <string name="retry_label">Retry agian</string>
     <string name="no_item">No item</string>
-    <string name="tag_list">My Tags</string>
+    <string name="my_tags">My Tags</string>
     <string name="tag_locations">Map</string>
     <string name="tag_notifications">Notifications</string>
     <string name="register_a_tag">Register a Tag</string>

@@ -1,8 +1,6 @@
 package mars.ring.interfaces.auth;
 
-import android.annotation.TargetApi;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.AnyThread;
 import android.support.annotation.ColorRes;
@@ -85,19 +83,22 @@ public final class LoginActivity extends AppCompatActivity {
         if (mAuthStateManager.getCurrent().isAuthorized()
                 && !mConfiguration.hasConfigurationChanged()) {
             Log.i(TAG, "User is already authenticated, proceeding to main activity");
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.addFlags(Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-            startActivity(intent);
-            finish();
+            goToMainActivity();
             return;
         }
 
         setContentView(R.layout.activity_login);
 
+        findViewById(R.id.start_auth).setOnClickListener((View view) -> {
+            RingApp.offline = false;
+            startAuth();
+        });
+        findViewById(R.id.start_offline).setOnClickListener((View view) -> {
+            RingApp.offline = true;
+            goToMainActivity();
+        });
         findViewById(R.id.retry).setOnClickListener((View view) ->
                 mExecutor.submit(this::initializeAppAuth));
-        findViewById(R.id.start_auth).setOnClickListener((View view) -> startAuth());
 
         if(!mConfiguration.isValid()) {
             displayError(mConfiguration.getConfigurationError(), false);
@@ -158,14 +159,9 @@ public final class LoginActivity extends AppCompatActivity {
             } else if (ex != null) {
                 displayError("Authorization flow failed: " + ex.getMessage(), true);
             } else {
-                displayError("No authorization state retained - reauthorization required", true);
+                displayError("No authorization state retained - re-authorization required", true);
             }
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.putExtras(data.getExtras());
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.addFlags(Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-            startActivity(intent);
-            finish();
+            goToMainActivity();
         }
     }
 
@@ -360,6 +356,14 @@ public final class LoginActivity extends AppCompatActivity {
             authRequestBuilder.setLoginHint(loginHint);
         }
         mAuthRequest.set(authRequestBuilder.build());
+    }
+
+    private void goToMainActivity() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_TASK_ON_HOME);
+        startActivity(intent);
+        finish();
     }
 
     private int getColorCompat(@ColorRes int color) {

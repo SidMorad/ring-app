@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
-import android.support.design.widget.NavigationView;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -21,9 +20,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 import mars.ring.R;
 import mars.ring.application.RingApp;
 import mars.ring.domain.model.beacontag.BeaconDTO;
+import mars.ring.domain.model.beacontag.BeaconListStorage;
 import mars.ring.interfaces.beacontag.discovery.ShowOneActivity;
 
 /**
@@ -37,8 +39,9 @@ public class BeaconTagActivity extends AppCompatActivity implements
 
     private final BeaconModelAdapter beaconsAdapter = new BeaconModelAdapter();
     public static final int EXPECTED_RESULT_CODE = 2;
-    private static final String TAG = "R.BeaconTagActivity";
+    private static final String TAG = BeaconTagActivity.class.getSimpleName();
     private RingApp app;
+    private BeaconListStorage beaconListStorage;
     private Button retryButton;
 
     @Override
@@ -47,6 +50,8 @@ public class BeaconTagActivity extends AppCompatActivity implements
         setContentView(R.layout.beacon_tag_activity);
 
         app = (RingApp) getApplication();
+        beaconListStorage = BeaconListStorage.getInstance(this);
+        beaconsAdapter.setAll(beaconListStorage.getCurrent());
 
         ListView lv = (ListView) findViewById(R.id.list_view);
         lv.setAdapter(beaconsAdapter);
@@ -68,7 +73,10 @@ public class BeaconTagActivity extends AppCompatActivity implements
                 getBeacons();
             }
         });
-        getBeacons();
+        hideRetryButton();
+        if (RingApp.isOnline()) {
+            getBeacons();
+        }
 
         BottomNavigationView tabView = (BottomNavigationView) findViewById(R.id.navigation);
         tabView.setOnNavigationItemSelectedListener(this);
@@ -123,8 +131,9 @@ public class BeaconTagActivity extends AppCompatActivity implements
                     beaconsAdapter.setAll(beacons);
                     beaconsAdapter.notifyDataSetChanged();
                 });
+                beaconListStorage.replace((ArrayList<BeaconDTO>) beacons);
             } else {
-                Toast.makeText(this, "Error on getting beacon list", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Error on getting tag list", Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "Error on getting beacon list", ex);
                 showRetryButton();
             }
@@ -150,7 +159,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.navigation_beacon_list:
-                setTitle(getString(R.string.tag_list));
+                setTitle(getString(R.string.my_tags));
                 return true;
             case R.id.navigation_beacon_map:
                 setTitle(getString(R.string.tag_locations));

@@ -3,8 +3,8 @@
 
   <item
     android:id="@+id/navigation_beacon_list"
-    android:icon="@drawable/ic_mytags_black_24dp"
-    android:title="@string/tag_list" />
+    android:icon="@drawable/ic_my_tags_black_24dp"
+    android:title="@string/my_tags" />
 
   <item
     android:id="@+id/navigation_beacon_map"
