@@ -23,7 +23,7 @@ android {
     }
     signingConfigs {
         releaseSigning {
-            storeFile file ((releaseKeystore.size() > 0) ? releaseKeystore : 'NO_KEYSTORE')
+            storeFile file ('GuploadKeystore.jks')
             storePassword ''
             keyAlias releaseKeyAlias
             keyPassword ''

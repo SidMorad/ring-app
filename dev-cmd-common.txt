@@ -1,1 +1,2 @@
 ./gradlew :app:run
+./gradlew assembleRelease --no-daemon
