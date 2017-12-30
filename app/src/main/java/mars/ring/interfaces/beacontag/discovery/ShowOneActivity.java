@@ -18,9 +18,12 @@ import android.widget.TextView;
 
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.Identifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 import mars.ring.R;
@@ -38,8 +41,11 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
     final private BeaconsAdapter mAdapter = new BeaconsAdapter();
     private BeaconManager beaconManager;
 
-    private static final String TAG = ShowOneActivity.class.getSimpleName();
+    private static final String TAG = ShowOneActivity.class.getSimpleName() + "1";
     private String theOneWithMac;
+    private Identifier theOneWithId1;
+    private Identifier theOneWithId2;
+    private Identifier theOneWithId3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +53,9 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
         setContentView(R.layout.show_one_beacon);
 
         theOneWithMac = getIntent().getStringExtra(BeaconDTO.MAC);
+        theOneWithId1 = Identifier.parse(getIntent().getStringExtra(BeaconDTO.IDENTIFIER));
+        theOneWithId2 = Identifier.fromInt(getIntent().getIntExtra(BeaconDTO.MAJOR, 0));
+        theOneWithId3 = Identifier.fromInt(getIntent().getIntExtra(BeaconDTO.MINOR, 0));
         String tagName = getIntent().getStringExtra(BeaconDTO.TAG_NAME);
         setTitle(getTitle() + ": " + tagName);
 
@@ -68,7 +77,7 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
     public void onBeaconServiceConnect() {
         beaconManager.addRangeNotifier(this);
         try {
-            beaconManager.startRangingBeaconsInRegion(new Region("showOnlyThisBeacon", null, null, null));
+            beaconManager.startRangingBeaconsInRegion(new Region("showOnlyThisBeacon", Arrays.asList(theOneWithId1, theOneWithId2, theOneWithId3), theOneWithMac));
         } catch (RemoteException e) {
             Log.e(TAG, "onStartRangingBeaconsInRegion", e);
         }
@@ -76,24 +85,12 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
 
     @Override
     public void didRangeBeaconsInRegion(final Collection<org.altbeacon.beacon.Beacon> beacons, Region region) {
-        Log.d(TAG, "didRangeBeaconsInRegion event occurred! " + beacons.size() + " " + region.getUniqueId());
+        Log.d(TAG, "didRangeBeaconsInRegion event occurred! " + beacons.size() + " Region: " + region.toString());
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (beacons.size() > 0) {
-                    if (mAdapter.getCount() > 0) {
-                        Beacon current = mAdapter.getItem(0);
-                        mAdapter.clear();
-                        mAdapter.addNewBeacon(new Beacon(current));
-                    }
-                    for (org.altbeacon.beacon.Beacon b: beacons) {
-                        if (b.getBluetoothAddress().equals(theOneWithMac)) {
-                            mAdapter.clear();
-                            mAdapter.addNewBeacon(Beacon.toModel(b));
-                        }
-                    }
-                    mAdapter.notifyDataSetChanged();
-                }
+                mAdapter.setAll(Beacon.toList(beacons));
+                mAdapter.notifyDataSetChanged();
             }
         });
     }

@@ -1,8 +1,11 @@
 package mars.ring.application;
 
+import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 
@@ -69,6 +72,11 @@ public final class RingApp extends android.app.Application implements BootstrapN
 //        beaconManager.setBackgroundScanPeriod(1100l);   // set duration of the scan be to be 1.1 seconds
         beaconManager.setBackgroundBetweenScanPeriod(backgroundBetweenScanPeriod);
         beaconManager.setForegroundBetweenScanPeriod(foregroundBetweenScanPeriod);
+        try {
+            beaconManager.updateScanPeriods();
+        } catch(Exception e) {
+            Log.e(TAG, "Can't talk to beacon service.");
+        }
     }
 
     @Override
@@ -94,6 +102,12 @@ public final class RingApp extends android.app.Application implements BootstrapN
 
     public static boolean isOnline() {
         return !offline;
+    }
+
+    public boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = connectivityManager.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnected();
     }
 
     public AuthRepo getAuthRepo() {

@@ -1,12 +1,17 @@
 package mars.ring.domain.model.beacontag;
 
-import android.bluetooth.BluetoothDevice;
+import android.util.Log;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Beacon model
@@ -15,31 +20,17 @@ import java.util.Date;
  */
 
 public class Beacon {
-    public String identifier;         // UUID of beacon
+    public String mac;           // ID of the beacon, in case of android it will be BT MAC address
+    public String identifier;    // UUID of beacon
     public Integer major;
     public Integer minor;
     public int txPower;         // reference power
     public int rssi;            // current RSSI
     public int batteryLevel;
     public double distance;
-    @Deprecated
-    public String arguments;    // string representing arguments inside AltBeacon
-
     public long timestamp;      // timestamp when this beacon was last time scanned
-    public String mac;           // ID of the beacon, in case of android it will be BT MAC address
 
-    private static final int PROTOCOL_OFFSET = 3;
-    private static final int AD_LENGTH_INDEX = PROTOCOL_OFFSET;
-    private static final int AD_TYPE_INDEX = 1 + PROTOCOL_OFFSET;
-    private static final int BEACON_CODE_INDEX = 4 + PROTOCOL_OFFSET;
-    private static final int UUID_START_INDEX = 6 + PROTOCOL_OFFSET;
-    private static final int UUID_STOP_INDEX  = UUID_START_INDEX + 15;
-    private static final int ARGS_START_INDEX = UUID_STOP_INDEX + 1;
-    private static final int TXPOWER_INDEX = ARGS_START_INDEX + 4;
-
-    private static final int AD_LENGTH_VALUE = 0x1b;
-    private static final int AD_TYPE_VALUE = 0xff;
-    private static final int BEACON_CODE_VALUE = 0xbeac;
+    private static final Map<Integer, Beacon> mBeaconMap = new ConcurrentHashMap<Integer, Beacon>();
 
     public Beacon() {}
 
@@ -52,23 +43,24 @@ public class Beacon {
         rssi = b.getRssi();
 //      batteryLevel = (int) (long) b.getDataFields().get(0);
         distance = b.getDistance();
-    }
-
-    public Beacon(Beacon other) {
-        mac = other.mac;
-        identifier = other.identifier;
-        major = other.major;
-        minor = other.minor;
-        txPower = other.txPower;
-        rssi = other.rssi;
-        distance = 0;
+        timestamp = new Date().getTime();
     }
 
     public static ArrayList<Beacon> toList(Collection<org.altbeacon.beacon.Beacon> beacons) {
         ArrayList<Beacon> result = new ArrayList<Beacon>();
         for (org.altbeacon.beacon.Beacon b : beacons) {
-            result.add(new Beacon(b));
+            mBeaconMap.put(toModel(b).hashCode(), toModel(b));
         }
+        removeOutdatedBeacons();
+        for (Beacon b: mBeaconMap.values()) {
+            result.add(b);
+        }
+        Collections.sort(result, new Comparator<Beacon>() {
+            @Override
+            public int compare(Beacon b1, Beacon b2) {
+                return Double.compare(b1.distance, b2.distance);
+            }
+        });
         return result;
     }
 
@@ -76,52 +68,61 @@ public class Beacon {
         return new Beacon(beacon);
     }
 
-    public static boolean isAltBeacon(final byte[] data) {
-        if ((data[AD_LENGTH_INDEX] & 0xff) != AD_LENGTH_VALUE) return false;
-
-        if ((data[AD_TYPE_INDEX] & 0xff) != AD_TYPE_VALUE) return false;
-
-        final int code = ((data[BEACON_CODE_INDEX] << 8) & 0x0000ff00) | ((data[BEACON_CODE_INDEX + 1]) & 0x000000ff);
-        if(code != BEACON_CODE_VALUE) return false;
-
-        return true;
-    }
-
     public String distance() {
         if (distance == 0) {
             return "-.-";
         }
         DecimalFormat df = new DecimalFormat("#.#");
+        if (distance > 99.9) {
+            df = new DecimalFormat("###");
+        }
         df.setRoundingMode(RoundingMode.CEILING);
         return df.format(distance);
     }
 
-    public int identifierHashCode() {
-        return Math.abs((mac + identifier + major + minor).hashCode());
+    public static void clearBeaconMap() {
+        mBeaconMap.clear();
     }
 
-    @Deprecated // in in favour of using Beacon Library
-    public void updateFrom(final BluetoothDevice device,
-                           final int rssi,
-                           final byte[] advertisement) {
-        this.rssi = rssi;
-        this.mac = device.getAddress();
-        this.timestamp = new Date().getTime();
-        this.txPower = (int) advertisement[TXPOWER_INDEX];
-        this.arguments = String.format("arg1: %02x %02x  arg2: %02x %02x",
-                advertisement[ARGS_START_INDEX],
-                advertisement[ARGS_START_INDEX + 1],
-                advertisement[ARGS_START_INDEX + 2],
-                advertisement[ARGS_START_INDEX + 3]);
+    private static final long BEACON_LIFE_DURATION = 4000; // 4 seconds
 
-        StringBuilder sb = new StringBuilder();
-        for(int i = UUID_START_INDEX, offset = 0; i <= UUID_STOP_INDEX; ++i, ++offset) {
-            sb.append(String.format("%02x", (int)(advertisement[i] & 0xff)));
-            if (offset == 3 || offset == 5 || offset == 7 || offset == 9) {
-                sb.append("-");
+    private static boolean removeOutdatedBeacons() {
+        boolean anythingChanged = false;
+
+        final long oldestTimestampAllowed = new Date().getTime() - BEACON_LIFE_DURATION;
+        for (Beacon beacon: mBeaconMap.values()) {
+            if (beacon.timestamp < oldestTimestampAllowed) {
+                mBeaconMap.remove(beacon.hashCode());
+                anythingChanged = true;
             }
         }
-        this.identifier = sb.toString();
+        Log.d(TAG,"All beacon validated, anythingChanged: " + anythingChanged);
+        return anythingChanged;
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (other == null || !(other instanceof Beacon)) {
+            return false;
+        }
+        Beacon b = (Beacon) other;
+        if (mac.equals(b.mac) &&
+                identifier.equals(b.identifier) &&
+                major.equals(b.major) &&
+                minor.equals(b.major)) {
+            return true;
+        }
+        return false;
+    }
+
+    public int identifierHashCode() {
+        return Math.abs(hashCode());
+    }
+
+    @Override
+    public int hashCode() {
+        return (mac + identifier + major + minor).hashCode();
+    }
+
+    private final static String TAG = Beacon.class.getSimpleName() + "1";
 }

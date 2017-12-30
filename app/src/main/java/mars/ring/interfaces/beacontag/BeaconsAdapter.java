@@ -8,8 +8,11 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.ListIterator;
+import java.util.Set;
 
+import mars.ring.BuildConfig;
 import mars.ring.domain.model.beacontag.Beacon;
 
 /**
@@ -20,27 +23,7 @@ import mars.ring.domain.model.beacontag.Beacon;
 
 public class BeaconsAdapter extends BaseAdapter {
 
-    ArrayList<Beacon> mBeacons = new ArrayList<Beacon>();
-    @Deprecated
-    private static final long BEACON_LIFE_DURATION = 6000; // 6 seconds
-
-    @Deprecated // in favour of using Beacon Library
-    public boolean validateAllBeacons() {
-        boolean anythingChanged = false;
-
-        final long oldestTimestampAllowed = new Date().getTime() - BEACON_LIFE_DURATION;
-        ListIterator<Beacon> iterator = mBeacons.listIterator();
-        while (iterator.hasNext()) {
-            final Beacon beacon = iterator.next();
-            if (beacon.timestamp < oldestTimestampAllowed) {
-                iterator.remove();
-                anythingChanged = true;
-            }
-        }
-        Log.d("BTP","All beacon validated, anythingChanged: " + anythingChanged);
-        return anythingChanged;
-    }
-
+    private final ArrayList<Beacon> mBeacons = new ArrayList<Beacon>();
 
     @Override
     public int getCount() {
@@ -63,7 +46,7 @@ public class BeaconsAdapter extends BaseAdapter {
 
     public void setAll(ArrayList<Beacon> beaconList) {
         clear();
-        mBeacons = beaconList;
+        mBeacons.addAll(beaconList);
     }
 
     public Beacon findBeaconWithId(final String id) {
@@ -106,8 +89,13 @@ public class BeaconsAdapter extends BaseAdapter {
                     "Identifier: %d, rssi: %d",
                     beacon.identifierHashCode(),
                     beacon.rssi);
+            if (BuildConfig.DEBUG) {
+                secondLine += String.format("\n Mac: %s \n Id1: %s \n Major: %d \n Minor: %d \n",
+                        beacon.mac, beacon.identifier, beacon.major, beacon.minor);
+            }
             text2.setText(secondLine);
         }
     }
 
+    private final static String TAG = "BA";
 }

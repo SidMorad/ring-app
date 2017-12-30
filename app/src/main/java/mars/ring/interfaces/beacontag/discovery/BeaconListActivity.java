@@ -43,7 +43,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
     final private BeaconsAdapter mAdapter = new BeaconsAdapter();
     private BeaconManager beaconManager;
 
-    private static final String TAG = BeaconListActivity.class.getSimpleName();
+    private static final String TAG = BeaconListActivity.class.getSimpleName() + "1";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,12 +70,14 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
             }
         });
 
+        beaconManager = BeaconManager.getInstanceForApplication(this.getApplicationContext());
+
         checkLocationPermissionGranted();
-        if (!isBluetoothAvailableAndEnabled()) {
+        if (isBluetoothAvailableAndEnabled()) {
+            beaconManager.bind(this);
+        } else {
             requestForBluetooth();
         }
-        beaconManager = BeaconManager.getInstanceForApplication(this.getApplicationContext());
-        beaconManager.bind(this);
     }
 
 
@@ -95,10 +97,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mAdapter.clear();
-                if (beacons.size() > 0) {
-                    mAdapter.setAll(Beacon.toList(beacons));
-                }
+                mAdapter.setAll(Beacon.toList(beacons));
                 mAdapter.notifyDataSetChanged();
             }
         });
@@ -111,6 +110,8 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
         if (requestCode == BT_REQUEST_ID) {
             if (!isBluetoothAvailableAndEnabled()) {
                 super.onActivityResult(requestCode, resultCode, data);
+            } else {
+                beaconManager.bind(this);
             }
         }
     }
@@ -160,6 +161,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
         if (requestCode == PERMISSION_REQUEST_COARSE_LOCATION) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "Coarse location permission granted.");
+                beaconManager.bind(this);
             }
             else {
                 checkLocationPermissionGranted();

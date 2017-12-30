@@ -62,7 +62,9 @@ public class BeaconTagActivity extends AppCompatActivity implements
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Intent intent = new Intent(BeaconTagActivity.this, ShowOneActivity.class);
-                intent.putExtra(BeaconDTO.MAC, beaconsAdapter.getItem(i).getMac());
+                intent.putExtra(BeaconDTO.IDENTIFIER, beaconsAdapter.getItem(i).getIdentifier());
+                intent.putExtra(BeaconDTO.MAJOR, beaconsAdapter.getItem(i).getMajor());
+                intent.putExtra(BeaconDTO.MINOR, beaconsAdapter.getItem(i).getMinor());
                 intent.putExtra(BeaconDTO.TAG_NAME, beaconsAdapter.getItem(i).getTagName());
                 startActivity(intent);
             }
@@ -151,7 +153,11 @@ public class BeaconTagActivity extends AppCompatActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (R.id.add_new_item == item.getItemId()) {
-            startActivityForResult(new Intent(this, mars.ring.interfaces.beacontag.discovery.BeaconListActivity.class), EXPECTED_RESULT_CODE);
+            if (app.isNetworkAvailable()) {
+                startActivityForResult(new Intent(this, mars.ring.interfaces.beacontag.discovery.BeaconListActivity.class), EXPECTED_RESULT_CODE);
+            } else {
+                Toast.makeText(this, getString(R.string.no_internet_access), Toast.LENGTH_SHORT).show();
+            }
             return true;
         }
         return super.onOptionsItemSelected(item);

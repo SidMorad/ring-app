@@ -1,6 +1,9 @@
 package mars.ring.interfaces.auth;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.AnyThread;
 import android.support.annotation.ColorRes;
@@ -83,6 +86,7 @@ public final class LoginActivity extends AppCompatActivity {
         if (mAuthStateManager.getCurrent().isAuthorized()
                 && !mConfiguration.hasConfigurationChanged()) {
             Log.i(TAG, "User is already authenticated, proceeding to main activity");
+            determineIfUserIsOnlineOrOffline();
             goToMainActivity();
             return;
         }
@@ -365,6 +369,15 @@ public final class LoginActivity extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
+
+    private void determineIfUserIsOnlineOrOffline() {
+        if (app.isNetworkAvailable()) {
+            RingApp.offline = false;
+        } else {
+            RingApp.offline = true;
+        }
+    }
+
 
     private int getColorCompat(@ColorRes int color) {
         return ContextCompat.getColor(this, color);
