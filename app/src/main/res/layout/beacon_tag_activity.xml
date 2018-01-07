@@ -40,6 +40,22 @@
         </android.support.v7.widget.LinearLayoutCompat>
     </android.support.constraint.ConstraintLayout>
 
+    <android.support.constraint.ConstraintLayout
+      android:id="@+id/beacon_map_container"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent">
+        <fragment
+          android:id="@+id/map_view"
+          android:name="com.google.android.gms.maps.SupportMapFragment"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:layout_centerHorizontal="true"
+          android:layout_alignParentLeft="true"
+          android:layout_alignParentBottom="true"
+          android:layout_alignParentRight="true"
+          android:layout_alignParentTop="true"
+          android:layout_margin="@dimen/standard_margin"/>
+    </android.support.constraint.ConstraintLayout>
 
     <android.support.design.widget.BottomNavigationView
       android:id="@+id/navigation"

@@ -20,6 +20,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 import java.util.ArrayList;
 
 import mars.ring.R;
@@ -35,7 +42,7 @@ import mars.ring.interfaces.beacontag.discovery.ShowOneActivity;
  */
 
 public class BeaconTagActivity extends AppCompatActivity implements
-        BottomNavigationView.OnNavigationItemSelectedListener {
+        BottomNavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
     private final BeaconModelAdapter beaconsAdapter = new BeaconModelAdapter();
     public static final int EXPECTED_RESULT_CODE = 2;
@@ -44,6 +51,9 @@ public class BeaconTagActivity extends AppCompatActivity implements
     private BeaconListStorage beaconListStorage;
     private Button retryButton;
     private Menu mMenu;
+    private GoogleMap mMap;
+    private View listContainer;
+    private View mapContainer;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -53,6 +63,10 @@ public class BeaconTagActivity extends AppCompatActivity implements
         app = (RingApp) getApplication();
         beaconListStorage = BeaconListStorage.getInstance(this);
         beaconsAdapter.setAll(beaconListStorage.getCurrent());
+
+        listContainer = findViewById(R.id.beacon_list_container);
+        mapContainer = findViewById(R.id.beacon_map_container);
+        mapContainer.setVisibility(View.GONE);
 
         ListView lv = (ListView) findViewById(R.id.list_view);
         lv.setAdapter(beaconsAdapter);
@@ -77,12 +91,16 @@ public class BeaconTagActivity extends AppCompatActivity implements
             }
         });
         hideRetryButton();
-        if (RingApp.isOnline()) {
-            getBeacons();
-        }
+
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_view);
+        mapFragment.getMapAsync(this);
 
         BottomNavigationView tabView = (BottomNavigationView) findViewById(R.id.navigation);
         tabView.setOnNavigationItemSelectedListener(this);
+
+        if (RingApp.isOnline()) {
+            getBeacons();
+        }
     }
 
     @Override
@@ -179,19 +197,37 @@ public class BeaconTagActivity extends AppCompatActivity implements
         return false;
     }
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.getUiSettings().setMapToolbarEnabled(false); // Hide Navigation and Gps Pointer buttons.
+
+        // Add a marker in Tehran and move the camera
+        LatLng sydney = new LatLng(34, 54);
+        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Tehran"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    }
+
     public void showList() {
         setTitle(getString(R.string.my_tags));
+        listContainer.setVisibility(View.VISIBLE);
+        mapContainer.setVisibility(View.GONE);
         getMenuInflater().inflate(R.menu.menu, mMenu);
+        hideRetryButton();
     }
 
     public void showMap() {
         setTitle(getString(R.string.tag_locations));
+        mapContainer.setVisibility(View.VISIBLE);
+        listContainer.setVisibility(View.GONE);
         mMenu.clear();
     }
 
     public void showNotifications() {
         setTitle(getString(R.string.tag_notifications));
         mMenu.clear();
+        listContainer.setVisibility(View.GONE);
+        mapContainer.setVisibility(View.GONE);
     }
 
     private void hideRetryButton() {
