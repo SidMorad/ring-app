@@ -1,12 +1,19 @@
 package mars.ring.interfaces.beacontag;
 
+import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -20,12 +27,15 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
 
@@ -36,7 +46,7 @@ import mars.ring.domain.model.beacontag.BeaconListStorage;
 import mars.ring.interfaces.beacontag.discovery.ShowOneActivity;
 
 /**
- * BeaconTagActivity that displays list of registered beacons.
+ * BeaconTagActivity that displays 3 tabs: list of registered beacons | Map | Notifications.
  *
  * Created by a developer on 21/11/17.
  */
@@ -44,14 +54,16 @@ import mars.ring.interfaces.beacontag.discovery.ShowOneActivity;
 public class BeaconTagActivity extends AppCompatActivity implements
         BottomNavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
-    private final BeaconModelAdapter beaconsAdapter = new BeaconModelAdapter();
-    public static final int EXPECTED_RESULT_CODE = 2;
-    private static final String TAG = BeaconTagActivity.class.getSimpleName();
     private RingApp app;
     private BeaconListStorage beaconListStorage;
-    private Button retryButton;
+    private final BeaconModelAdapter beaconsAdapter = new BeaconModelAdapter();
+    private GoogleMap map;
+    private SupportMapFragment mapFragment;
+    private FusedLocationProviderClient mFusedLocationProviderClient;
+    private boolean mLocationPermissionGranted = false;
+    private Location mLastKnownLocation;
     private Menu mMenu;
-    private GoogleMap mMap;
+    private Button retryButton;
     private View listContainer;
     private View mapContainer;
 
@@ -92,8 +104,9 @@ public class BeaconTagActivity extends AppCompatActivity implements
         });
         hideRetryButton();
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_view);
+        mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_view);
         mapFragment.getMapAsync(this);
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         BottomNavigationView tabView = (BottomNavigationView) findViewById(R.id.navigation);
         tabView.setOnNavigationItemSelectedListener(this);
@@ -102,6 +115,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
             getBeacons();
         }
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -162,6 +176,90 @@ public class BeaconTagActivity extends AppCompatActivity implements
     }
 
     @Override
+    public void onMapReady(GoogleMap googleMap) {
+        map = googleMap;
+        map.getUiSettings().setMapToolbarEnabled(false); // Hide Navigation and Gps Pointer buttons.
+
+        // Turn on the My Location layer and the related control on the map.
+        updateLocationUI();
+
+        // Get the current location of the device and set the position of the map.
+        getDeviceLocation();
+    }
+
+    private void updateLocationUI() {
+        if (map == null) {
+            return;
+        }
+        try {
+            if (mLocationPermissionGranted) {
+                map.setMyLocationEnabled(true);
+                map.getUiSettings().setMyLocationButtonEnabled(true);
+            } else {
+                map.setMyLocationEnabled(false);
+                map.getUiSettings().setMyLocationButtonEnabled(false);
+                mLastKnownLocation = null;
+                checkLocationPermissionGranted();
+            }
+        } catch (SecurityException e) {
+            Log.e(TAG, "SecurityException", e);
+        }
+    }
+
+    private void getDeviceLocation() {
+        /**
+         * Get the best and most recent location of the device, which may be null in rare
+         * cases when a location is not available.
+         */
+        try {
+            if (mLocationPermissionGranted) {
+                Task<Location> locationResult = mFusedLocationProviderClient.getLastLocation();
+                locationResult.addOnCompleteListener(this, new OnCompleteListener() {
+                    @Override
+                    public void onComplete(@NonNull Task task) {
+                        if (task.isSuccessful()) {
+                            // Set the map's camera position to the current location of the device
+                            mLastKnownLocation = (Location) task.getResult();
+                            if (mLastKnownLocation != null) {
+                                map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), 11));
+                            } else {
+                                Log.d(TAG, "Current location is null. Using defaults.");
+                            }
+
+                        } else {
+                            Log.d(TAG, "Current location is null. Using defaults.");
+                            Log.e(TAG, "Exception: %s", task.getException());
+                        }
+                    }
+                });
+            }
+        } catch (SecurityException e) {
+            Log.e(TAG, "SecurityException", e);
+        }
+    }
+
+    private void showList() {
+        setTitle(getString(R.string.my_tags));
+        listContainer.setVisibility(View.VISIBLE);
+        mapContainer.setVisibility(View.GONE);
+        getMenuInflater().inflate(R.menu.menu, mMenu);
+        hideRetryButton();
+    }
+
+    private void showMap() {
+        setTitle(getString(R.string.tag_locations));
+        mapContainer.setVisibility(View.VISIBLE);
+        listContainer.setVisibility(View.GONE);
+        mMenu.clear();
+    }
+
+    private void showNotifications() {
+        setTitle(getString(R.string.tag_notifications));
+        mMenu.clear();
+        listContainer.setVisibility(View.GONE);
+        mapContainer.setVisibility(View.GONE);
+    }
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
         this.mMenu = menu;
@@ -198,36 +296,36 @@ public class BeaconTagActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        mMap.getUiSettings().setMapToolbarEnabled(false); // Hide Navigation and Gps Pointer buttons.
-
-        // Add a marker in Tehran and move the camera
-        LatLng sydney = new LatLng(34, 54);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Tehran"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == LOCATION_PERMISSION_RESULT_CODE) {
+            mLocationPermissionGranted = false;
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                mLocationPermissionGranted = true;
+                updateLocationUI();
+                getDeviceLocation();
+            }
+        }
     }
 
-    public void showList() {
-        setTitle(getString(R.string.my_tags));
-        listContainer.setVisibility(View.VISIBLE);
-        mapContainer.setVisibility(View.GONE);
-        getMenuInflater().inflate(R.menu.menu, mMenu);
-        hideRetryButton();
-    }
-
-    public void showMap() {
-        setTitle(getString(R.string.tag_locations));
-        mapContainer.setVisibility(View.VISIBLE);
-        listContainer.setVisibility(View.GONE);
-        mMenu.clear();
-    }
-
-    public void showNotifications() {
-        setTitle(getString(R.string.tag_notifications));
-        mMenu.clear();
-        listContainer.setVisibility(View.GONE);
-        mapContainer.setVisibility(View.GONE);
+    public void checkLocationPermissionGranted() {
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            final android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+            builder.setTitle("This app needs Location access");
+            builder.setMessage("Please grant location access to this app detect last seen location of your tags.");
+            builder.setPositiveButton(android.R.string.ok, null);
+            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @TargetApi(Build.VERSION_CODES.M)
+                public void onDismiss(DialogInterface dialog) {
+                    ActivityCompat.requestPermissions(BeaconTagActivity.this,
+                            new String[]{ Manifest.permission.ACCESS_FINE_LOCATION },
+                            LOCATION_PERMISSION_RESULT_CODE);
+                }
+            });
+            builder.show();
+        } else {
+            mLocationPermissionGranted = true;
+        }
     }
 
     private void hideRetryButton() {
@@ -238,4 +336,9 @@ public class BeaconTagActivity extends AppCompatActivity implements
         retryButton.setVisibility(View.VISIBLE);
     }
 
+    private static final String TAG = BeaconTagActivity.class.getSimpleName() + "1";
+
+    public static final int EXPECTED_RESULT_CODE = 2;
+
+    public static final int LOCATION_PERMISSION_RESULT_CODE = 3;
 }
