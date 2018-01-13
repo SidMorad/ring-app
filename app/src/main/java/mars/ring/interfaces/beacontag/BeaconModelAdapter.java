@@ -1,13 +1,17 @@
 package mars.ring.interfaces.beacontag;
 
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import mars.ring.R;
 import mars.ring.domain.model.beacontag.BeaconDTO;
 
 /**
@@ -17,6 +21,11 @@ import mars.ring.domain.model.beacontag.BeaconDTO;
 public class BeaconModelAdapter extends BaseAdapter {
 
     List<BeaconDTO> mBeacons = new ArrayList<BeaconDTO>();
+    BeaconTagActivity activityInstance;
+
+    BeaconModelAdapter(BeaconTagActivity beaconTagActivity) {
+        this.activityInstance = beaconTagActivity;
+    }
 
     @Override
     public int getCount() {
@@ -52,31 +61,73 @@ public class BeaconModelAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
-            convertView = View.inflate(parent.getContext(), android.R.layout.two_line_list_item, null);
+            convertView = View.inflate(parent.getContext(), R.layout.beacon_tag_list_item, null);
         }
         BeaconModelAdapter.ViewHolder holder = (BeaconModelAdapter.ViewHolder) convertView.getTag();
         if (holder == null) {
             holder = new BeaconModelAdapter.ViewHolder(convertView);
             convertView.setTag(holder);
         }
-        holder.updateAccordingToBeacon(getItem(position));
+        holder.updateAccordingToBeacon(getItem(position), position);
         return convertView;
     }
 
     private class ViewHolder {
         public TextView text1;
-        public TextView text2;
+        public ImageButton icon1;
+        public ImageButton edit;
+        public ImageButton meter;
         public ViewHolder(final View target) {
             text1 = (TextView) target.findViewById(android.R.id.text1);
-            text2 = (TextView) target.findViewById(android.R.id.text2);
+            icon1 = (ImageButton) target.findViewById(R.id.icon1);
+            edit = (ImageButton) target.findViewById(R.id.edit_button);
+            meter = (ImageButton) target.findViewById(R.id.meter_button);
+
+            edit.setImageResource(R.drawable.ic_pencil_balck_24dp);
+            edit.setBackgroundResource(R.drawable.border_default);
+            edit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d(TAG, "Edit button clicked!" + view.getTag());
+                    activityInstance.openEditBeaconDialog((BeaconDTO) view.getTag());
+                }
+            });
+            meter.setImageResource(R.drawable.ic_altimeter_balck_24dp);
+            meter.setBackgroundResource(R.drawable.border_primary);
+            meter.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d(TAG, "Meter button clicked!" + view.getTag());
+                    activityInstance.goToShowOneActivity((BeaconDTO) view.getTag());
+                }
+            });
         }
-        public void updateAccordingToBeacon(final BeaconDTO beacon) {
+        public void updateAccordingToBeacon(final BeaconDTO beacon, int position) {
+
             text1.setText(beacon.getTagName());
-            String secondLine = String.format(
-                    "Tag Identifier: %s",
-                    beacon.identifierHashCode());
-            text2.setText(secondLine);
+            edit.setTag(beacon);
+            meter.setTag(beacon);
+            if (beacon.getCategory() != null) {
+                switch(beacon.getCategory()) {
+                    case KEYS:
+                        icon1.setBackgroundResource(R.drawable.ic_key_balck_24dp);
+                        return;
+                    case WALLET:
+                        icon1.setBackgroundResource(R.drawable.ic_wallet_balck_24dp);
+                        return;
+                    case BAG:
+                        icon1.setBackgroundResource(R.drawable.ic_bag_balck_24dp);
+                        return;
+                    case ACCESSORIES:
+                        icon1.setBackgroundResource(R.drawable.ic_remote_balck_24dp);
+                        return;
+                    default:
+                        icon1.setBackgroundResource(R.drawable.ic_key_balck_24dp);
+                        return;
+                }
+            }
         }
     }
 
+    private final static String TAG = BeaconModelAdapter.class.getSimpleName() + "1";
 }

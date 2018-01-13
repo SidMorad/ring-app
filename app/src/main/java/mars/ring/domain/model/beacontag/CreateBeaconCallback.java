@@ -5,5 +5,5 @@ package mars.ring.domain.model.beacontag;
  */
 
 public interface CreateBeaconCallback {
-    void call(Exception e);
+    void call(HttpException e);
 }

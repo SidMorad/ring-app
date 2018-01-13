@@ -42,6 +42,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
 
     final private BeaconsAdapter mAdapter = new BeaconsAdapter();
     private BeaconManager beaconManager;
+    private Region discoveryRegion = new Region("myDiscoveryUniqueId", null, null, null);
 
     private static final String TAG = BeaconListActivity.class.getSimpleName() + "1";
 
@@ -85,7 +86,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
     public void onBeaconServiceConnect() {
         beaconManager.addRangeNotifier(this);
         try {
-            beaconManager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
+            beaconManager.startRangingBeaconsInRegion(discoveryRegion);
         } catch (RemoteException e) {
             Log.e(TAG, "onStartRangingBeaconsInRegion", e);
         }
@@ -144,6 +145,11 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
         if (beaconManager.isBound(this)) {
             beaconManager.setBackgroundMode(true);
             beaconManager.setForegroundBetweenScanPeriod(RingApp.foregroundBetweenScanPeriod);
+            try {
+                beaconManager.stopRangingBeaconsInRegion(discoveryRegion);
+            } catch (RemoteException e) {
+                Log.e(TAG, "OnStopRangingBeaconsInRegion", e);
+            }
         }
     }
 

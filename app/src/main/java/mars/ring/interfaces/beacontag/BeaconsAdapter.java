@@ -90,8 +90,8 @@ public class BeaconsAdapter extends BaseAdapter {
                     beacon.identifierHashCode(),
                     beacon.rssi);
             if (BuildConfig.DEBUG) {
-                secondLine += String.format("\n Mac: %s \n Id1: %s \n Major: %d \n Minor: %d \n",
-                        beacon.mac, beacon.identifier, beacon.major, beacon.minor);
+                secondLine += String.format("\n Mac: %s \n Id1: %s \n Major: %d \n Minor: %d \n TxPower: %d \n",
+                        beacon.mac, beacon.identifier, beacon.major, beacon.minor, beacon.txPower);
             }
             text2.setText(secondLine);
         }

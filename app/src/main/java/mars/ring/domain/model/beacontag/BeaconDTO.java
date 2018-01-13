@@ -10,6 +10,7 @@ import com.google.common.hash.HashCode;
 
 public class BeaconDTO {
     public static final String TAG_NAME = "tagName";
+    public static final String CATEGORY = "category";
     public static final String IDENTIFIER = "identifier";
     public static final String MAJOR = "major";
     public static final String MINOR = "minor";
@@ -19,6 +20,7 @@ public class BeaconDTO {
 
     private Long id;
     private String tagName;
+    private Category category;
     private String identifier;
     private Integer major;
     private Integer minor;
@@ -36,6 +38,7 @@ public class BeaconDTO {
         this.mac = data.getStringExtra(MAC);
         this.batteryLevel = data.getIntExtra(BATTERY_LEVEL, 100);
         this.txPower = data.getIntExtra(TX_POWER, 0);
+        this.category = Category.fromIndex(data.getIntExtra(CATEGORY, 0));
     }
 
     public int identifierHashCode() {
@@ -78,6 +81,10 @@ public class BeaconDTO {
         return txPower;
     }
 
+    public Category getCategory() {
+        return category;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -110,4 +117,7 @@ public class BeaconDTO {
         this.txPower = txPower;
     }
 
+    public void setCategory(Category category) {
+        this.category = category;
+    }
 }

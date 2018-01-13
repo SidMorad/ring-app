@@ -1,2 +1,2 @@
-./gradlew :app:run
+./gradlew :app:run --offline
 ./gradlew assembleRelease --no-daemon

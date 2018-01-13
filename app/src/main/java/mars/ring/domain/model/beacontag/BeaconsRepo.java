@@ -45,7 +45,7 @@ public class BeaconsRepo {
 
         OkHttpClient.Builder clientBuilder = new OkHttpClient().newBuilder();
         clientBuilder.addInterceptor(authRepo.getAccessTokenInterceptor());
-        clientBuilder.addInterceptor(authRepo.getAccessTokenRetryInterceptor());
+//        clientBuilder.addInterceptor(authRepo.getAccessTokenRetryInterceptor());
         clientBuilder.addInterceptor(logger);
         clientBuilder.connectTimeout(30, TimeUnit.SECONDS);
         clientBuilder.readTimeout(30, TimeUnit.SECONDS);
@@ -71,6 +71,11 @@ public class BeaconsRepo {
         request.enqueue(new CreateBeaconCallbackImpl(callback));
     }
 
+    public void updateBeacon(BeaconDTO dto, UpdateBeaconCallback callback) {
+        Call<Void> request = beaconsAPI.updateBeacon(dto);
+        request.enqueue(new UpdateBeaconCallbackImpl(callback));
+    }
+
     private static class CreateBeaconCallbackImpl implements Callback<Void> {
         private CreateBeaconCallback callback;
         public CreateBeaconCallbackImpl(CreateBeaconCallback callback) {
@@ -86,7 +91,7 @@ public class BeaconsRepo {
                     String errorBody = response.errorBody().string();
                     Log.w(TAG, errorBody);
                     ErrorBodyDTO error = new Gson().fromJson(errorBody, ErrorBodyDTO.class);
-                    callback.call(new Exception(error.getTitle()));
+                    callback.call(new HttpException(response.code(), error.getTitle()));
                 } catch (IOException e) {
                     Log.e(TAG, e.getMessage(), e);
                 }
@@ -95,7 +100,7 @@ public class BeaconsRepo {
 
         @Override
         public void onFailure(Call<Void> call, Throwable t) {
-            callback.call(new Exception("Create a Beacon failed: " + t.getMessage()));
+            callback.call(new HttpException(503, "Create a Beacon failed: " + t.getMessage()));
         }
     }
 
@@ -118,6 +123,34 @@ public class BeaconsRepo {
         @Override
         public void onFailure(Call<List<BeaconDTO>> call, Throwable t) {
             callback.call(Collections.emptyList(), new Exception("Invalid response" + t.getMessage()));
+        }
+    }
+
+    private static class UpdateBeaconCallbackImpl implements Callback<Void> {
+        private UpdateBeaconCallback callback;
+        public UpdateBeaconCallbackImpl(UpdateBeaconCallback callback) {
+            this.callback = callback;
+        }
+
+        @Override
+        public void onResponse(Call<Void> call, Response<Void> response) {
+            if (response.isSuccessful()) {
+                callback.call(null);
+            } else {
+                try {
+                    String errorBody = response.errorBody().string();
+                    Log.w(TAG, errorBody);
+                    ErrorBodyDTO error = new Gson().fromJson(errorBody, ErrorBodyDTO.class);
+                    callback.call(new HttpException(response.code(), error.getTitle()));
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage(), e);
+                }
+            }
+        }
+
+        @Override
+        public void onFailure(Call<Void> call, Throwable t) {
+            callback.call(new HttpException(503, "Update a Beacon failed: " + t.getMessage()));
         }
     }
 }

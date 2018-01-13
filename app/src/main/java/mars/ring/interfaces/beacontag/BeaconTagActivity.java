@@ -22,7 +22,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,9 +40,13 @@ import java.util.ArrayList;
 
 import mars.ring.R;
 import mars.ring.application.RingApp;
+import mars.ring.domain.model.beacontag.Beacon;
 import mars.ring.domain.model.beacontag.BeaconDTO;
 import mars.ring.domain.model.beacontag.BeaconListStorage;
+import mars.ring.domain.model.beacontag.Category;
 import mars.ring.interfaces.beacontag.discovery.ShowOneActivity;
+import mars.ring.interfaces.beacontag.helpers.AlertBuilderHelper;
+import mars.ring.interfaces.beacontag.helpers.AlertOnPositiveButtonClickedCallback;
 
 /**
  * BeaconTagActivity that displays 3 tabs: list of registered beacons | Map | Notifications.
@@ -56,7 +59,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
 
     private RingApp app;
     private BeaconListStorage beaconListStorage;
-    private final BeaconModelAdapter beaconsAdapter = new BeaconModelAdapter();
+    private BeaconModelAdapter beaconsAdapter;
     private GoogleMap map;
     private SupportMapFragment mapFragment;
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -74,6 +77,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
 
         app = (RingApp) getApplication();
         beaconListStorage = BeaconListStorage.getInstance(this);
+        beaconsAdapter = new BeaconModelAdapter(this);
         beaconsAdapter.setAll(beaconListStorage.getCurrent());
 
         listContainer = findViewById(R.id.beacon_list_container);
@@ -87,12 +91,13 @@ public class BeaconTagActivity extends AppCompatActivity implements
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Intent intent = new Intent(BeaconTagActivity.this, ShowOneActivity.class);
-                intent.putExtra(BeaconDTO.IDENTIFIER, beaconsAdapter.getItem(i).getIdentifier());
-                intent.putExtra(BeaconDTO.MAJOR, beaconsAdapter.getItem(i).getMajor());
-                intent.putExtra(BeaconDTO.MINOR, beaconsAdapter.getItem(i).getMinor());
-                intent.putExtra(BeaconDTO.TAG_NAME, beaconsAdapter.getItem(i).getTagName());
-                startActivity(intent);
+//                Intent intent = new Intent(BeaconTagActivity.this, ShowOneActivity.class);
+//                intent.putExtra(BeaconDTO.IDENTIFIER, beaconsAdapter.getItem(i).getIdentifier());
+//                intent.putExtra(BeaconDTO.MAJOR, beaconsAdapter.getItem(i).getMajor());
+//                intent.putExtra(BeaconDTO.MINOR, beaconsAdapter.getItem(i).getMinor());
+//                intent.putExtra(BeaconDTO.TAG_NAME, beaconsAdapter.getItem(i).getTagName());
+//                startActivity(intent);
+                goToShowOneActivity(beaconsAdapter.getItem(i));
             }
         });
         retryButton = (Button) findViewById(R.id.retry);
@@ -121,39 +126,63 @@ public class BeaconTagActivity extends AppCompatActivity implements
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.d(TAG, "onActivityResult(" + requestCode + ", " + resultCode + ", " + data);
         super.onActivityResult(requestCode, resultCode, data);
-        if (EXPECTED_RESULT_CODE == requestCode) {
+        if (CREATE_BEACON_RESULT_CODE == requestCode) {
             if (Activity.RESULT_OK == resultCode) {
-                AlertDialog.Builder aBuilder = new AlertDialog.Builder(this);
-                final EditText input = new EditText(this);
-                aBuilder.setView(input);
-                aBuilder.setTitle(getString(R.string.name_your_tag));
-                aBuilder.setPositiveButton(getString(R.string.add), new DialogInterface.OnClickListener() {
+                AlertDialog dialog = AlertBuilderHelper.beaconForm(this, null, new AlertOnPositiveButtonClickedCallback() {
                     @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        String tagName = input.getText().toString();
-                        Log.d(TAG, "Entered tagName is " + tagName);
-                        createBeaconTag(tagName, data);
+                    public void onClick(String tagName, Integer categoryIndex, BeaconDTO dto) {
+                        createBeaconTag(tagName, Category.fromIndex(categoryIndex), data);
                     }
                 });
-                aBuilder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int i) {
-                        dialog.cancel();
-                    }
-                });
-                aBuilder.show();
+                dialog.show();
             }
         }
     }
 
-    private void createBeaconTag(String tagName, Intent data) {
+    public void openEditBeaconDialog(BeaconDTO dto) {
+        AlertDialog dialog = AlertBuilderHelper.beaconForm(this, dto, new AlertOnPositiveButtonClickedCallback() {
+            @Override
+            public void onClick(String tagName, Integer categoryIndex, BeaconDTO dto) {
+                updateBeaconTag(tagName, Category.fromIndex(categoryIndex), dto);
+            }
+        });
+        dialog.show();
+    }
+
+    public void goToShowOneActivity(BeaconDTO dto) {
+        Intent intent = new Intent(BeaconTagActivity.this, ShowOneActivity.class);
+        intent.putExtra(BeaconDTO.IDENTIFIER, dto.getIdentifier());
+        intent.putExtra(BeaconDTO.MAJOR, dto.getMajor());
+        intent.putExtra(BeaconDTO.MINOR, dto.getMinor());
+        intent.putExtra(BeaconDTO.TAG_NAME, dto.getTagName());
+        intent.putExtra(BeaconDTO.MAC, dto.getMac());
+        Beacon.clearBeaconMap();
+        startActivity(intent);
+    }
+
+    private void createBeaconTag(String tagName, Category category, Intent data) {
         data.putExtra(BeaconDTO.TAG_NAME, tagName);
+        data.putExtra(BeaconDTO.CATEGORY, category.index());
         BeaconDTO bModel = new BeaconDTO(data);
         app.getBeaconsRepo().createBeacon(bModel, (ex) -> {
             if (ex == null) {
                 getBeacons();
             } else {
-                Toast.makeText(this, ex.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this,
+                        String.format("Error %d: %s", ex.getStatusCode(), ex.getMessage()), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void updateBeaconTag(String tagName, Category category, BeaconDTO dto) {
+        dto.setTagName(tagName);
+        dto.setCategory(category);
+        app.getBeaconsRepo().updateBeacon(dto, (ex) -> {
+            if (ex == null) {
+                getBeacons();
+            } else {
+                Toast.makeText(this,
+                        String.format("Error %d: %s", ex.getStatusCode(), ex.getMessage()), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -270,7 +299,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         if (R.id.add_new_item == item.getItemId()) {
             if (app.isNetworkAvailable()) {
-                startActivityForResult(new Intent(this, mars.ring.interfaces.beacontag.discovery.BeaconListActivity.class), EXPECTED_RESULT_CODE);
+                startActivityForResult(new Intent(this, mars.ring.interfaces.beacontag.discovery.BeaconListActivity.class), CREATE_BEACON_RESULT_CODE);
             } else {
                 Toast.makeText(this, getString(R.string.no_internet_access), Toast.LENGTH_SHORT).show();
             }
@@ -336,9 +365,9 @@ public class BeaconTagActivity extends AppCompatActivity implements
         retryButton.setVisibility(View.VISIBLE);
     }
 
-    private static final String TAG = BeaconTagActivity.class.getSimpleName() + "1";
+    public static final String TAG = BeaconTagActivity.class.getSimpleName() + "1";
 
-    public static final int EXPECTED_RESULT_CODE = 2;
+    public static final int CREATE_BEACON_RESULT_CODE = 2;
 
     public static final int LOCATION_PERMISSION_RESULT_CODE = 3;
 }

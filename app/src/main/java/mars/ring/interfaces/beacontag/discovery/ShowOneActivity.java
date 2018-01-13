@@ -46,6 +46,7 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
     private Identifier theOneWithId1;
     private Identifier theOneWithId2;
     private Identifier theOneWithId3;
+    private Region theOneWithRegionId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +57,7 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
         theOneWithId1 = Identifier.parse(getIntent().getStringExtra(BeaconDTO.IDENTIFIER));
         theOneWithId2 = Identifier.fromInt(getIntent().getIntExtra(BeaconDTO.MAJOR, 0));
         theOneWithId3 = Identifier.fromInt(getIntent().getIntExtra(BeaconDTO.MINOR, 0));
+        theOneWithMac = getIntent().getStringExtra(BeaconDTO.MAC);
         String tagName = getIntent().getStringExtra(BeaconDTO.TAG_NAME);
         setTitle(getTitle() + ": " + tagName);
 
@@ -77,7 +79,8 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
     public void onBeaconServiceConnect() {
         beaconManager.addRangeNotifier(this);
         try {
-            beaconManager.startRangingBeaconsInRegion(new Region("showOnlyThisBeacon", Arrays.asList(theOneWithId1, theOneWithId2, theOneWithId3), theOneWithMac));
+            theOneWithRegionId = new Region("showOnlyThisBeacon", Arrays.asList(theOneWithId1, theOneWithId2, theOneWithId3), theOneWithMac);
+            beaconManager.startRangingBeaconsInRegion(theOneWithRegionId);
         } catch (RemoteException e) {
             Log.e(TAG, "onStartRangingBeaconsInRegion", e);
         }
@@ -86,13 +89,15 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
     @Override
     public void didRangeBeaconsInRegion(final Collection<org.altbeacon.beacon.Beacon> beacons, Region region) {
         Log.d(TAG, "didRangeBeaconsInRegion event occurred! " + beacons.size() + " Region: " + region.toString());
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mAdapter.setAll(Beacon.toList(beacons));
-                mAdapter.notifyDataSetChanged();
-            }
-        });
+        if (theOneWithId3.equals(region.getId3()) && beacons.size() < 2) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mAdapter.setAll(Beacon.toList(beacons));
+                    mAdapter.notifyDataSetChanged();
+                }
+            });
+        }
     }
 
     final private static int BT_REQUEST_ID = 1;
@@ -126,6 +131,8 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
             beaconManager.setBackgroundMode(false);
             beaconManager.setForegroundBetweenScanPeriod(0l);
         }
+        mAdapter.clear();
+        mAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -134,7 +141,14 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
         if (beaconManager.isBound(this)) {
             beaconManager.setBackgroundMode(true);
             beaconManager.setForegroundBetweenScanPeriod(RingApp.foregroundBetweenScanPeriod);
+            try {
+                beaconManager.stopRangingBeaconsInRegion(theOneWithRegionId);
+            } catch (RemoteException e) {
+                Log.e(TAG, "OnStopRangingBeaconsInRegion", e);
+            }
         }
+        mAdapter.clear();
+        mAdapter.notifyDataSetChanged();
     }
 
     @Override

@@ -17,4 +17,10 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="no_internet_access">No Internet Access! please connect to the internet for continue your action.</string>
+    <string name="category">Category</string>
+    <string name="keys">Keys</string>
+    <string name="wallet">Wallet</string>
+    <string name="bag">Bag</string>
+    <string name="accessories">Accessories</string>
+    <string name="edit">Edit</string>
 </resources>

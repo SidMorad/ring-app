@@ -1,0 +1,6 @@
+<resources>
+  <item name="radio_type_key_id" type="id"></item>
+  <item name="radio_type_wallet_id" type="id"></item>
+  <item name="radio_type_bag_id" type="id"></item>
+  <item name="radio_type_accessories_id" type="id"></item>
+</resources>

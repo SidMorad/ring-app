@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         if (R.id.nav_signout == item.getItemId()) {
             // Handle singout
-            Log.d(TAG, "Signout item clicked!");
+            Log.d(TAG, "Sign out item clicked!");
             signOut();
         }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

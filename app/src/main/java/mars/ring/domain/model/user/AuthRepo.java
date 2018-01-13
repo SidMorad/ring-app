@@ -136,8 +136,8 @@ public class AuthRepo {
             }
         };
     }
-
-    public Interceptor getAccessTokenRetryInterceptor() {
+/*
+    private Interceptor getAccessTokenRetryInterceptor() {
         return new Interceptor() {
             @Override
             public Response intercept(Chain chain) throws IOException {
@@ -147,20 +147,19 @@ public class AuthRepo {
                 int responseCode = 0;
                 int tryCount = 0;
 
-                while(!responseOk && tryCount < 2) {
+                while(!responseOk && tryCount < 1) {
                     try {
                         if (responseCode == 401) {  // Here we check if error code is 401, if yes then we try one more time with new access token
                             request = request.newBuilder().header("Authorization", "Bearer " + getAccessToken()).build();
-                        } else if (responseCode == 0) {
+//                        } else if (responseCode == 0) {
                         } else {
-                            tryCount++;
                             break;
                         }
                         response = chain.proceed(request);
                         responseOk = response.isSuccessful();
                         responseCode = response.code();
                     } catch (Exception e) {
-                        Log.d(TAG, "Request was no successful try number " + tryCount);
+                        Log.e(TAG, "Request was no successful try number " + tryCount, e);
                     } finally {
                         tryCount++;
                     }
@@ -170,5 +169,5 @@ public class AuthRepo {
             }
         };
     }
-
+*/
 }
