@@ -1,5 +1,7 @@
 package mars.ring.domain.model.beacontag;
 
+import mars.ring.R;
+
 /**
  * Created by developer on 09/01/18.
  */
@@ -36,4 +38,36 @@ public enum Category {
         return 0;
     }
   }
+
+  public static int res(Category cat) {
+    switch (cat) {
+      case KEYS:
+        return R.drawable.ic_key_balck_24dp;
+      case WALLET:
+        return R.drawable.ic_wallet_balck_24dp;
+      case BAG:
+        return R.drawable.ic_bag_balck_24dp;
+      case ACCESSORIES:
+        return R.drawable.ic_remote_balck_24dp;
+      default:
+        return R.drawable.ic_key_balck_24dp;
+    }
+  }
+
+
+  public static int resWhite(Category cat) {
+    switch (cat) {
+      case KEYS:
+        return R.drawable.ic_key_white_24dp;
+      case WALLET:
+        return R.drawable.ic_wallet_white_24dp;
+      case BAG:
+        return R.drawable.ic_bag_white_24dp;
+      case ACCESSORIES:
+        return R.drawable.ic_remote_white_24dp;
+      default:
+        return R.drawable.ic_key_white_24dp;
+    }
+  }
+
 }

@@ -1,9 +1,8 @@
 package mars.ring.domain.model.user;
 
 import android.content.Intent;
-import android.support.annotation.MainThread;
+import android.support.annotation.AnyThread;
 import android.support.annotation.Nullable;
-import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import net.openid.appauth.AppAuthConfiguration;
@@ -61,11 +60,21 @@ public class AuthRepo {
 
     int accessTokenFailureCount = 0;
 
-    @WorkerThread
+    @AnyThread
     public String getAccessToken() {
         if (!isAuthorized()) {
             Log.w(TAG, "Want to get accessToken but is not authorized!");
-            app.startActivity(new Intent(app, LoginActivity.class));
+//            Handler handler = new Handler(Looper.getMainLooper());
+//            handler.post(new Runnable() {
+//                @Override
+//                public void run() {
+                    Intent loginActivity = new Intent();
+                    loginActivity.setClass(app, LoginActivity.class);
+                    loginActivity.setAction(LoginActivity.class.getName());
+//                    loginActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                    app.startActivity(loginActivity);
+//                }
+//            });
             return null;
         }
 
@@ -88,7 +97,7 @@ public class AuthRepo {
     }
 
 
-    @MainThread
+    @AnyThread
     private void refreshAccessToken() {
         Log.i(TAG,"RefreshAccessToken occoured");
         performTokenRequest(
@@ -96,7 +105,7 @@ public class AuthRepo {
                 this::handleAccessTokenResponse);
     }
 
-    @MainThread
+    @AnyThread
     private void performTokenRequest(
             TokenRequest request,
             AuthorizationService.TokenResponseCallback callback) {
@@ -104,8 +113,7 @@ public class AuthRepo {
         try {
             clientAuthentication = authStateManager.getCurrent().getClientAuthentication();
         } catch (ClientAuthentication.UnsupportedAuthenticationMethod ex) {
-            Log.d(TAG, "Token request cannot be made, client authentication for the token "
-                    + "endpoint could not be constructed (%s)", ex);
+            Log.d(TAG, "Token request cannot be made, client authentication for the token endpoint could not be constructed (%s)", ex);
             return;
         }
 
@@ -115,7 +123,7 @@ public class AuthRepo {
                 callback);
     }
 
-    @WorkerThread
+    @AnyThread
     private void handleAccessTokenResponse(
             @Nullable TokenResponse tokenResponse,
             @Nullable AuthorizationException authException) {

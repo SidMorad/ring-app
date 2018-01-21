@@ -88,8 +88,8 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
 
     @Override
     public void didRangeBeaconsInRegion(final Collection<org.altbeacon.beacon.Beacon> beacons, Region region) {
-        Log.d(TAG, "didRangeBeaconsInRegion event occurred! " + beacons.size() + " Region: " + region.toString());
-        if (theOneWithId3.equals(region.getId3()) && beacons.size() < 2) {
+        if (region.equals(theOneWithRegionId)) {
+            Log.d(TAG, "Region: " + region.getUniqueId() + " " + beacons.size());
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -141,10 +141,12 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
         if (beaconManager.isBound(this)) {
             beaconManager.setBackgroundMode(true);
             beaconManager.setForegroundBetweenScanPeriod(RingApp.foregroundBetweenScanPeriod);
-            try {
-                beaconManager.stopRangingBeaconsInRegion(theOneWithRegionId);
-            } catch (RemoteException e) {
-                Log.e(TAG, "OnStopRangingBeaconsInRegion", e);
+            if (theOneWithRegionId != null) {
+                try {
+                    beaconManager.stopRangingBeaconsInRegion(theOneWithRegionId);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "OnStopRangingBeaconsInRegion", e);
+                }
             }
         }
         mAdapter.clear();

@@ -3,12 +3,17 @@ package mars.ring.interfaces.beacontag;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
@@ -32,21 +37,29 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import mars.ring.R;
 import mars.ring.application.RingApp;
+import mars.ring.application.util.GenericCallback;
+import mars.ring.application.util.GenericCallbackImpl;
 import mars.ring.domain.model.beacontag.Beacon;
 import mars.ring.domain.model.beacontag.BeaconDTO;
+import mars.ring.domain.model.beacontag.BeaconLTDTO;
 import mars.ring.domain.model.beacontag.BeaconListStorage;
 import mars.ring.domain.model.beacontag.Category;
 import mars.ring.interfaces.beacontag.discovery.ShowOneActivity;
 import mars.ring.interfaces.beacontag.helpers.AlertBuilderHelper;
-import mars.ring.interfaces.beacontag.helpers.AlertOnPositiveButtonClickedCallback;
+import mars.ring.interfaces.beacontag.helpers.AlertOnButtonClickedCallback;
 
 /**
  * BeaconTagActivity that displays 3 tabs: list of registered beacons | Map | Notifications.
@@ -69,6 +82,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
     private Button retryButton;
     private View listContainer;
     private View mapContainer;
+    private List<BeaconLTDTO> lastBeaconLocations;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -91,12 +105,6 @@ public class BeaconTagActivity extends AppCompatActivity implements
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-//                Intent intent = new Intent(BeaconTagActivity.this, ShowOneActivity.class);
-//                intent.putExtra(BeaconDTO.IDENTIFIER, beaconsAdapter.getItem(i).getIdentifier());
-//                intent.putExtra(BeaconDTO.MAJOR, beaconsAdapter.getItem(i).getMajor());
-//                intent.putExtra(BeaconDTO.MINOR, beaconsAdapter.getItem(i).getMinor());
-//                intent.putExtra(BeaconDTO.TAG_NAME, beaconsAdapter.getItem(i).getTagName());
-//                startActivity(intent);
                 goToShowOneActivity(beaconsAdapter.getItem(i));
             }
         });
@@ -118,9 +126,43 @@ public class BeaconTagActivity extends AppCompatActivity implements
 
         if (RingApp.isOnline()) {
             getBeacons();
+            getLastLocations(new GenericCallbackImpl());
         }
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (R.id.add_new_item == item.getItemId()) {
+            if (app.isNetworkAvailable()) {
+                startActivityForResult(new Intent(this, mars.ring.interfaces.beacontag.discovery.BeaconListActivity.class), CREATE_BEACON_RESULT_CODE);
+            } else {
+                Toast.makeText(this, getString(R.string.no_internet_access), Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        }
+        if (R.id.sync_last_locations == item.getItemId()) {
+            if (app.isNetworkAvailable()) {
+                if (app.isLocationAvailable()) {
+                    if (app.isBluetoothAvailableAndEnabled()) {
+                        app.sendBeaconTracesToServer();
+                        getLastLocations(new GenericCallback() {
+                            public void onSuccess() {
+                                updateLocationUI();
+                            }
+                            public void onFailure(Exception e) {}
+                        });
+                    } else {
+                        Toast.makeText(this, getString(R.string.no_bluetooth_service), Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(this, getString(R.string.no_location_service), Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, getString(R.string.no_internet_access), Toast.LENGTH_SHORT).show();
+            }
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -128,11 +170,12 @@ public class BeaconTagActivity extends AppCompatActivity implements
         super.onActivityResult(requestCode, resultCode, data);
         if (CREATE_BEACON_RESULT_CODE == requestCode) {
             if (Activity.RESULT_OK == resultCode) {
-                AlertDialog dialog = AlertBuilderHelper.beaconForm(this, null, new AlertOnPositiveButtonClickedCallback() {
+                AlertDialog dialog = AlertBuilderHelper.beaconForm(this, null, new AlertOnButtonClickedCallback() {
                     @Override
-                    public void onClick(String tagName, Integer categoryIndex, BeaconDTO dto) {
+                    public void onPositiveClick(String tagName, Integer categoryIndex, BeaconDTO dto) {
                         createBeaconTag(tagName, Category.fromIndex(categoryIndex), data);
                     }
+                    public void onNegativeClick(BeaconDTO dto) {}
                 });
                 dialog.show();
             }
@@ -140,10 +183,14 @@ public class BeaconTagActivity extends AppCompatActivity implements
     }
 
     public void openEditBeaconDialog(BeaconDTO dto) {
-        AlertDialog dialog = AlertBuilderHelper.beaconForm(this, dto, new AlertOnPositiveButtonClickedCallback() {
+        AlertDialog dialog = AlertBuilderHelper.beaconForm(this, dto, new AlertOnButtonClickedCallback() {
             @Override
-            public void onClick(String tagName, Integer categoryIndex, BeaconDTO dto) {
+            public void onPositiveClick(String tagName, Integer categoryIndex, BeaconDTO dto) {
                 updateBeaconTag(tagName, Category.fromIndex(categoryIndex), dto);
+            }
+            @Override
+            public void onNegativeClick(BeaconDTO dto) {
+                deleteBeaconTag(dto);
             }
         });
         dialog.show();
@@ -187,6 +234,16 @@ public class BeaconTagActivity extends AppCompatActivity implements
         });
     }
 
+    private void deleteBeaconTag(BeaconDTO dto) {
+        app.getBeaconsRepo().deleteBeacon(dto.getId(), (ex) -> {
+            if (ex == null) {
+                getBeacons();
+            } else {
+                Toast.makeText(this, String.format("Error %d: %s", ex.getStatusCode(), ex.getMessage()), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
     private void getBeacons() {
         hideRetryButton();
         app.getBeaconsRepo().getBeacons((beacons, ex) -> {
@@ -200,6 +257,19 @@ public class BeaconTagActivity extends AppCompatActivity implements
                 Toast.makeText(this, "Error on getting tag list", Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "Error on getting beacon list", ex);
                 showRetryButton();
+            }
+        });
+    }
+
+    private void getLastLocations(GenericCallback call) {
+        app.getBeaconsRepo().lastLocations((locations, ex) -> {
+            if (ex == null) {
+                lastBeaconLocations = locations;
+                call.onSuccess();
+            } else {
+                Log.e(TAG, "Error on fetching last beacon locations. ", ex);
+                Toast.makeText(BeaconTagActivity.this, ex.getStatusCode() + ": " + ex.getMessage(), Toast.LENGTH_SHORT).show();
+                call.onFailure(ex);
             }
         });
     }
@@ -233,6 +303,31 @@ public class BeaconTagActivity extends AppCompatActivity implements
         } catch (SecurityException e) {
             Log.e(TAG, "SecurityException", e);
         }
+        if (lastBeaconLocations != null) {
+            map.clear();
+            LatLngBounds.Builder bc = new LatLngBounds.Builder();
+            int i = 0;
+            for (BeaconLTDTO b: lastBeaconLocations) {
+                Double lon;
+                if (i == 0) {
+                    i++;
+                    lon = b.getLon();
+                } else {
+                    lon = plusOrMines ? b.getLonPlusRandom() : b.getLonMinesRandom();
+                    plusOrMines = !plusOrMines;
+                }
+                bc.include(new LatLng(b.getLat(), lon));
+                MarkerOptions marker = new MarkerOptions()
+                        .position(new LatLng(b.getLat(), lon))
+                        .title(b.getTagName())
+                        .icon(bitmapDescriptorFromVector(this, Category.resWhite(b.getCategory())));
+                map.addMarker(marker);
+            }
+            if (mLastKnownLocation != null) {
+                bc.include(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
+            }
+            map.moveCamera(CameraUpdateFactory.newLatLngBounds(bc.build(), 50));
+        }
     }
 
     private void getDeviceLocation() {
@@ -250,7 +345,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
                             // Set the map's camera position to the current location of the device
                             mLastKnownLocation = (Location) task.getResult();
                             if (mLastKnownLocation != null) {
-                                map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), 11));
+//                                map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), 11));
                             } else {
                                 Log.d(TAG, "Current location is null. Using defaults.");
                             }
@@ -271,7 +366,8 @@ public class BeaconTagActivity extends AppCompatActivity implements
         setTitle(getString(R.string.my_tags));
         listContainer.setVisibility(View.VISIBLE);
         mapContainer.setVisibility(View.GONE);
-        getMenuInflater().inflate(R.menu.menu, mMenu);
+        mMenu.clear();
+        getMenuInflater().inflate(R.menu.beacon_list_menu, mMenu);
         hideRetryButton();
     }
 
@@ -280,6 +376,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
         mapContainer.setVisibility(View.VISIBLE);
         listContainer.setVisibility(View.GONE);
         mMenu.clear();
+        getMenuInflater().inflate(R.menu.beacon_map_menu, mMenu);
     }
 
     private void showNotifications() {
@@ -290,22 +387,9 @@ public class BeaconTagActivity extends AppCompatActivity implements
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu, menu);
+        getMenuInflater().inflate(R.menu.beacon_list_menu, menu);
         this.mMenu = menu;
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (R.id.add_new_item == item.getItemId()) {
-            if (app.isNetworkAvailable()) {
-                startActivityForResult(new Intent(this, mars.ring.interfaces.beacontag.discovery.BeaconListActivity.class), CREATE_BEACON_RESULT_CODE);
-            } else {
-                Toast.makeText(this, getString(R.string.no_internet_access), Toast.LENGTH_SHORT).show();
-            }
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -357,6 +441,19 @@ public class BeaconTagActivity extends AppCompatActivity implements
         }
     }
 
+    private BitmapDescriptor bitmapDescriptorFromVector(Context context, @DrawableRes  int vectorDrawableResourceId) {
+        Drawable background = ContextCompat.getDrawable(context, R.drawable.ic_map_pin_filled_blue_48dp);
+        background.setBounds(0, 0, background.getIntrinsicWidth(), background.getIntrinsicHeight());
+        Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorDrawableResourceId);
+        vectorDrawable.setBounds(40, 20, vectorDrawable.getIntrinsicWidth() + 40, vectorDrawable.getIntrinsicHeight() + 20);
+        Bitmap bitmap = Bitmap.createBitmap(background.getIntrinsicWidth(), background.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        background.draw(canvas);
+        vectorDrawable.draw(canvas);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
+
     private void hideRetryButton() {
         retryButton.setVisibility(View.INVISIBLE);
     }
@@ -365,9 +462,12 @@ public class BeaconTagActivity extends AppCompatActivity implements
         retryButton.setVisibility(View.VISIBLE);
     }
 
+    private boolean plusOrMines = true;
+
     public static final String TAG = BeaconTagActivity.class.getSimpleName() + "1";
 
     public static final int CREATE_BEACON_RESULT_CODE = 2;
 
     public static final int LOCATION_PERMISSION_RESULT_CODE = 3;
+
 }

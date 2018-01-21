@@ -25,12 +25,18 @@ import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import mars.ring.R;
 import mars.ring.application.RingApp;
 import mars.ring.domain.model.beacontag.Beacon;
 import mars.ring.domain.model.beacontag.BeaconDTO;
+import mars.ring.domain.model.beacontag.BeaconListStorage;
 import mars.ring.interfaces.beacontag.BeaconsAdapter;
+
+import static mars.ring.application.RingApp.RING_ID1;
 
 /**
  * BeaconListActivity a class that shows list of (known/unknown)beacons.
@@ -42,8 +48,8 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
 
     final private BeaconsAdapter mAdapter = new BeaconsAdapter();
     private BeaconManager beaconManager;
-    private Region discoveryRegion = new Region("myDiscoveryUniqueId", null, null, null);
-
+    private Region discoveryRegion = new Region("myDiscoveryUniqueId", RING_ID1, null, null);
+    private List<BeaconDTO> myBeacons;
     private static final String TAG = BeaconListActivity.class.getSimpleName() + "1";
 
     @Override
@@ -79,8 +85,8 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
         } else {
             requestForBluetooth();
         }
+        myBeacons = BeaconListStorage.getInstance(this).getCurrent();
     }
-
 
     @Override
     public void onBeaconServiceConnect() {
@@ -94,14 +100,28 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
 
     @Override
     public void didRangeBeaconsInRegion(final Collection<org.altbeacon.beacon.Beacon> beacons, Region region) {
-        Log.d(TAG, "didRangeBeaconsInRegion event occurred! " + beacons.size() + " " + region.getUniqueId());
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mAdapter.setAll(Beacon.toList(beacons));
-                mAdapter.notifyDataSetChanged();
+        if (region.equals(discoveryRegion)) {
+            Log.d(TAG, "Region: " + region.getUniqueId() + " " + beacons.size());
+            Set<org.altbeacon.beacon.Beacon> notRegisteredYetByMe = new HashSet<org.altbeacon.beacon.Beacon>();
+            for (org.altbeacon.beacon.Beacon b: beacons) {
+                boolean isMine = false;
+                for (BeaconDTO m: myBeacons) {
+                    if (b.getBluetoothAddress().equals(m.getMac())) {
+                        isMine = true;
+                    }
+                }
+                if (!isMine) {
+                    notRegisteredYetByMe.add(b);
+                }
             }
-        });
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mAdapter.setAll(Beacon.toList(notRegisteredYetByMe));
+                    mAdapter.notifyDataSetChanged();
+                }
+            });
+        }
     }
 
     final private static int BT_REQUEST_ID = 1;
@@ -145,10 +165,12 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
         if (beaconManager.isBound(this)) {
             beaconManager.setBackgroundMode(true);
             beaconManager.setForegroundBetweenScanPeriod(RingApp.foregroundBetweenScanPeriod);
-            try {
-                beaconManager.stopRangingBeaconsInRegion(discoveryRegion);
-            } catch (RemoteException e) {
-                Log.e(TAG, "OnStopRangingBeaconsInRegion", e);
+            if (discoveryRegion != null) {
+                try {
+                    beaconManager.stopRangingBeaconsInRegion(discoveryRegion);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "OnStopRangingBeaconsInRegion", e);
+                }
             }
         }
     }

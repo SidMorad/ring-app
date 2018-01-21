@@ -8,9 +8,11 @@ import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import mars.ring.application.RingApp;
+import mars.ring.application.util.GsonHelper;
 import mars.ring.domain.shared.ErrorBodyDTO;
 import mars.ring.domain.model.user.AuthRepo;
 import okhttp3.OkHttpClient;
@@ -24,7 +26,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 /**
  * Created by developer on 12/12/17.
  */
-
 public class BeaconsRepo {
     private static final String TAG = BeaconsRepo.class.getSimpleName();
     private final String BEACONS_URL_BASE = "https://ring.webebook.org/api/";
@@ -52,11 +53,10 @@ public class BeaconsRepo {
 
         OkHttpClient client = clientBuilder.build();
 
-        Gson gson = new GsonBuilder().setLenient().create();
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BEACONS_URL_BASE)
                 .client(client)
-                .addConverterFactory(GsonConverterFactory.create(gson))
+                .addConverterFactory(GsonConverterFactory.create(GsonHelper.GSON))
                 .build();
         return retrofit.create(BeaconsAPI.class);
     }
@@ -76,6 +76,16 @@ public class BeaconsRepo {
         request.enqueue(new UpdateBeaconCallbackImpl(callback));
     }
 
+    public void deleteBeacon(Long id, DeleteBeaconCallback callback) {
+        Call<Void> request = beaconsAPI.deleteBeacon(id);
+        request.enqueue(new DeleteBeaconCallbackImpl(callback));
+    }
+
+    public void lastLocations(BeaconLocationsCallback callback) {
+        Call<List<BeaconLTDTO>> request = beaconsAPI.lastLocations();
+        request.enqueue(new BeaconLocationsCallbackImpl(callback));
+    }
+
     private static class CreateBeaconCallbackImpl implements Callback<Void> {
         private CreateBeaconCallback callback;
         public CreateBeaconCallbackImpl(CreateBeaconCallback callback) {
@@ -92,7 +102,7 @@ public class BeaconsRepo {
                     Log.w(TAG, errorBody);
                     ErrorBodyDTO error = new Gson().fromJson(errorBody, ErrorBodyDTO.class);
                     callback.call(new HttpException(response.code(), error.getTitle()));
-                } catch (IOException e) {
+                } catch (Exception e) {
                     Log.e(TAG, e.getMessage(), e);
                 }
             }
@@ -126,6 +136,28 @@ public class BeaconsRepo {
         }
     }
 
+    private static class BeaconLocationsCallbackImpl implements Callback<List<BeaconLTDTO>> {
+        private final BeaconLocationsCallback callback;
+        BeaconLocationsCallbackImpl(BeaconLocationsCallback callback) {
+            this.callback = callback;
+        }
+
+        @Override
+        public void onResponse(Call<List<BeaconLTDTO>> call, Response<List<BeaconLTDTO>> response) {
+            if (response.isSuccessful()) {
+                List<BeaconLTDTO> result = response.body();
+                callback.call(result, null);
+            } else {
+                callback.call(Collections.emptyList(), new HttpException(response.code(), "Response failed."));
+            }
+        }
+
+        @Override
+        public void onFailure(Call<List<BeaconLTDTO>> call, Throwable t) {
+            callback.call(Collections.emptyList(), new HttpException(503, t.getMessage()));
+        }
+    }
+
     private static class UpdateBeaconCallbackImpl implements Callback<Void> {
         private UpdateBeaconCallback callback;
         public UpdateBeaconCallbackImpl(UpdateBeaconCallback callback) {
@@ -142,8 +174,9 @@ public class BeaconsRepo {
                     Log.w(TAG, errorBody);
                     ErrorBodyDTO error = new Gson().fromJson(errorBody, ErrorBodyDTO.class);
                     callback.call(new HttpException(response.code(), error.getTitle()));
-                } catch (IOException e) {
+                } catch (Exception e) {
                     Log.e(TAG, e.getMessage(), e);
+                    callback.call(new HttpException(0, e.getMessage()));
                 }
             }
         }
@@ -151,6 +184,35 @@ public class BeaconsRepo {
         @Override
         public void onFailure(Call<Void> call, Throwable t) {
             callback.call(new HttpException(503, "Update a Beacon failed: " + t.getMessage()));
+        }
+    }
+
+    private static class DeleteBeaconCallbackImpl implements Callback<Void> {
+        private DeleteBeaconCallback callback;
+        public DeleteBeaconCallbackImpl(DeleteBeaconCallback callback) {
+            this.callback = callback;
+        }
+
+        @Override
+        public void onResponse(Call<Void> call, Response<Void> response) {
+            if (response.isSuccessful()) {
+                callback.call(null);
+            } else {
+                try {
+                    String errorBody = response.errorBody().string();
+                    Log.w(TAG, errorBody);
+                    ErrorBodyDTO error = new Gson().fromJson(errorBody, ErrorBodyDTO.class);
+                    callback.call(new HttpException(response.code(), error.getTitle()));
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage(), e);
+                    callback.call(new HttpException(0, e.getMessage()));
+                }
+            }
+        }
+
+        @Override
+        public void onFailure(Call<Void> call, Throwable t) {
+            callback.call(new HttpException(503, "Delete a beacon failed: " + t.getMessage()));
         }
     }
 }

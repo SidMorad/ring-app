@@ -1,8 +1,6 @@
 package mars.ring.interfaces.beacontag.helpers;
 
-import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.WindowManager;
@@ -15,7 +13,6 @@ import android.widget.TextView;
 
 import mars.ring.R;
 import mars.ring.domain.model.beacontag.BeaconDTO;
-import mars.ring.domain.model.beacontag.Category;
 import mars.ring.interfaces.beacontag.BeaconTagActivity;
 
 /**
@@ -23,7 +20,7 @@ import mars.ring.interfaces.beacontag.BeaconTagActivity;
  */
 public class AlertBuilderHelper {
 
-    public static AlertDialog beaconForm(BeaconTagActivity context, BeaconDTO dto, AlertOnPositiveButtonClickedCallback callback) {
+    public static AlertDialog beaconForm(BeaconTagActivity context, BeaconDTO dto, AlertOnButtonClickedCallback callback) {
         AlertDialog.Builder aBuilder = new AlertDialog.Builder(context);
         final ScrollView scrollView = new ScrollView(context);
         final LinearLayout lLayout = new LinearLayout(context);
@@ -68,27 +65,32 @@ public class AlertBuilderHelper {
 
         aBuilder.setView(scrollView);
         aBuilder.setTitle(context.getString(R.string.name_your_tag));
+        String postitiveButtonText = context.getString(R.string.add);
+        String negativeButtonText = context.getString(R.string.delete);
         if (dto != null) {
             input.setText(dto.getTagName());
             if (dto.getCategory() != null) {
                 Log.d(TAG, "Category index was : " + dto.getCategory().index());
                 ((RadioButton) radioGroup.getChildAt(dto.getCategory().index())).setChecked(true);
             }
+            postitiveButtonText = context.getString(R.string.edit);
+            negativeButtonText = context.getString(R.string.delete);
         }
-        aBuilder.setPositiveButton(context.getString(R.string.add), new DialogInterface.OnClickListener() {
+        aBuilder.setPositiveButton(postitiveButtonText, new DialogInterface.OnClickListener() {
           @Override
           public void onClick(DialogInterface dialogInterface, int i) {
             String tagName = input.getText().toString();
             Log.d(TAG, "Entered tagName is " + tagName);
             int catIndex = radioGroup.indexOfChild(radioGroup.findViewById(radioGroup.getCheckedRadioButtonId()));
             Log.d(TAG, "Entered categoryIndex is " + catIndex);
-            callback.onClick(tagName, catIndex, dto);
+            callback.onPositiveClick(tagName, catIndex, dto);
           }
         });
-        aBuilder.setNegativeButton(context.getString(R.string.cancel), new DialogInterface.OnClickListener() {
+        aBuilder.setNegativeButton(negativeButtonText, new DialogInterface.OnClickListener() {
           @Override
           public void onClick(DialogInterface dialog, int i) {
-            dialog.cancel();
+              callback.onNegativeClick(dto);
+              dialog.cancel();
           }
         });
         AlertDialog dialog = aBuilder.create();

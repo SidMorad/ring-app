@@ -13,13 +13,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import mars.ring.domain.shared.Entity;
+
 /**
  * Beacon model
  *
  * Created by developer on 23/10/17.
  */
 
-public class Beacon {
+public class Beacon implements Entity<Beacon> {
     public String mac;           // ID of the beacon, in case of android it will be BT MAC address
     public String identifier;    // UUID of beacon
     public Integer major;
@@ -101,18 +103,19 @@ public class Beacon {
     }
 
     @Override
+    public boolean sameIdentityAs(Beacon other) {
+        return this.mac != null &&
+               other.mac != null &&
+               other.mac.equals(this.mac);
+    }
+
+    @Override
     public boolean equals(Object other) {
         if (other == null || !(other instanceof Beacon)) {
             return false;
         }
-        Beacon b = (Beacon) other;
-        if (mac.equals(b.mac) &&
-                identifier.equals(b.identifier) &&
-                major.equals(b.major) &&
-                minor.equals(b.major)) {
-            return true;
-        }
-        return false;
+        Beacon aBeacon = (Beacon) other;
+        return sameIdentityAs(aBeacon);
     }
 
     public int identifierHashCode() {
@@ -121,7 +124,7 @@ public class Beacon {
 
     @Override
     public int hashCode() {
-        return (mac + identifier + major + minor).hashCode();
+        return mac.hashCode();
     }
 
     private final static String TAG = Beacon.class.getSimpleName() + "1";
