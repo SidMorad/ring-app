@@ -49,9 +49,13 @@
 -dontwarn javax.lang.model.element.Modifier
 -dontnote com.google.appengine.api.**
 -dontnote com.google.apphosting.api.**
+-dontnote com.google.gson.**
 
 # AltBeacon library
 -dontnote org.altbeacon.beacon.SimulatedScanData
+
+# Google play services
+-dontnote com.google.android.gms.**
 
 # Other
 -dontnote android.net.http.*
