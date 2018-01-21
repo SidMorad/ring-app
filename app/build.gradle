@@ -55,7 +55,7 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     implementation "com.google.android.gms:play-services-maps:${rootProject.playServicesVersion}"
     implementation "com.google.android.gms:play-services-location:${rootProject.playServicesVersion}"
-    implementation 'org.altbeacon:android-beacon-library:2.12.3'
+    implementation 'org.altbeacon:android-beacon-library:2.12.4'
     implementation 'net.openid:appauth:0.7.0'
     implementation 'com.squareup.okio:okio:1.13.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:3.9.0'

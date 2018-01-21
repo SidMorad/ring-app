@@ -72,8 +72,8 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
         }
         beaconManager = BeaconManager.getInstanceForApplication(this.getApplicationContext());
         beaconManager.bind(this);
+        Beacon.clearBeaconMap();    // Making sure there is no left beacon in the map from previous activity - considering 4 seconds delay
     }
-
 
     @Override
     public void onBeaconServiceConnect() {
@@ -154,9 +154,16 @@ public class ShowOneActivity extends AppCompatActivity implements BeaconConsumer
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        finish();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if (beaconManager != null) {
+            beaconManager.removeRangeNotifier(this);
             beaconManager.unbind(this);
         }
     }

@@ -49,7 +49,6 @@ import mars.ring.domain.model.beacontag.BeaconsRepo;
 /**
  * Created by developer on 07/12/17.
  */
-
 public final class RingApp extends android.app.Application implements BootstrapNotifier, BeaconConsumer, RangeNotifier {
 
     public static final String RING_UUID = "0be1cc29-2222-4444-8888-00bbee11cc00";

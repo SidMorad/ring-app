@@ -52,11 +52,11 @@ import mars.ring.R;
 import mars.ring.application.RingApp;
 import mars.ring.application.util.GenericCallback;
 import mars.ring.application.util.GenericCallbackImpl;
-import mars.ring.domain.model.beacontag.Beacon;
 import mars.ring.domain.model.beacontag.BeaconDTO;
 import mars.ring.domain.model.beacontag.BeaconLTDTO;
 import mars.ring.domain.model.beacontag.BeaconListStorage;
 import mars.ring.domain.model.beacontag.Category;
+import mars.ring.interfaces.beacontag.discovery.BeaconRegistrationActivity;
 import mars.ring.interfaces.beacontag.discovery.ShowOneActivity;
 import mars.ring.interfaces.beacontag.helpers.AlertBuilderHelper;
 import mars.ring.interfaces.beacontag.helpers.AlertOnButtonClickedCallback;
@@ -134,7 +134,9 @@ public class BeaconTagActivity extends AppCompatActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         if (R.id.add_new_item == item.getItemId()) {
             if (app.isNetworkAvailable()) {
-                startActivityForResult(new Intent(this, mars.ring.interfaces.beacontag.discovery.BeaconListActivity.class), CREATE_BEACON_RESULT_CODE);
+                Intent intent = new Intent(this, BeaconRegistrationActivity.class);
+//                intent.setFlags(intent.getFlags() | Intent.FLAG_ACTIVITY_NO_HISTORY);
+                startActivityForResult(intent, CREATE_BEACON_RESULT_CODE);
             } else {
                 Toast.makeText(this, getString(R.string.no_internet_access), Toast.LENGTH_SHORT).show();
             }
@@ -203,7 +205,6 @@ public class BeaconTagActivity extends AppCompatActivity implements
         intent.putExtra(BeaconDTO.MINOR, dto.getMinor());
         intent.putExtra(BeaconDTO.TAG_NAME, dto.getTagName());
         intent.putExtra(BeaconDTO.MAC, dto.getMac());
-        Beacon.clearBeaconMap();
         startActivity(intent);
     }
 

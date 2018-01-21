@@ -25,8 +25,10 @@ import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import mars.ring.R;
@@ -39,18 +41,17 @@ import mars.ring.interfaces.beacontag.BeaconsAdapter;
 import static mars.ring.application.RingApp.RING_ID1;
 
 /**
- * BeaconListActivity a class that shows list of (known/unknown)beacons.
+ * BeaconRegistrationActivity a class that shows list of (known/unknown)beacons.
  *
  * Created by a developer on 23/10/17.
  */
 
-public class BeaconListActivity extends AppCompatActivity implements BeaconConsumer, RangeNotifier {
+public class BeaconRegistrationActivity extends AppCompatActivity implements BeaconConsumer, RangeNotifier {
 
     final private BeaconsAdapter mAdapter = new BeaconsAdapter();
     private BeaconManager beaconManager;
     private Region discoveryRegion = new Region("myDiscoveryUniqueId", RING_ID1, null, null);
-    private List<BeaconDTO> myBeacons;
-    private static final String TAG = BeaconListActivity.class.getSimpleName() + "1";
+    private Map<Integer, Boolean> myBeaconMap = new HashMap<Integer, Boolean>();;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +73,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
                 resultIntent.putExtra(BeaconDTO.MINOR, mAdapter.getItem(i).minor);
                 resultIntent.putExtra(BeaconDTO.TX_POWER, mAdapter.getItem(i).txPower);
                 resultIntent.putExtra(BeaconDTO.BATTERY_LEVEL, mAdapter.getItem(i).batteryLevel);
+//                resultIntent.setFlags(resultIntent.getFlags() | Intent.FLAG_ACTIVITY_NO_HISTORY);
                 setResult(Activity.RESULT_OK, resultIntent);
                 finish();
             }
@@ -85,7 +87,23 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
         } else {
             requestForBluetooth();
         }
-        myBeacons = BeaconListStorage.getInstance(this).getCurrent();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        finish();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Beacon.clearBeaconMap();    // Making sure there is no left beacon in the map from previous activity - considering 4 seconds delay
+        myBeaconMap.clear();
+        for (BeaconDTO dto: BeaconListStorage.getInstance(this).getCurrent()) {
+            myBeaconMap.put(dto.getMac().hashCode(), true);
+        }
+        Log.d(TAG, "BeaconRegistrationActivty onStartCalled. #of my beacons is " + myBeaconMap.size());
     }
 
     @Override
@@ -105,12 +123,13 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
             Set<org.altbeacon.beacon.Beacon> notRegisteredYetByMe = new HashSet<org.altbeacon.beacon.Beacon>();
             for (org.altbeacon.beacon.Beacon b: beacons) {
                 boolean isMine = false;
-                for (BeaconDTO m: myBeacons) {
-                    if (b.getBluetoothAddress().equals(m.getMac())) {
-                        isMine = true;
-                    }
+                Log.d(TAG, "############################" + myBeaconMap.size());
+                if (myBeaconMap.containsKey(b.getBluetoothAddress().hashCode())) {
+                    Log.d(TAG, "Bingo!");
+                    isMine = true;
                 }
                 if (!isMine) {
+                    Log.d(TAG, "Ingo!");
                     notRegisteredYetByMe.add(b);
                 }
             }
@@ -177,10 +196,12 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         if (beaconManager != null) {
+            beaconManager.removeRangeNotifier(this);
             beaconManager.unbind(this);
         }
+        Log.d(TAG, "BeaconRegistrationActivity onDestroy called.");
+        super.onDestroy();
     }
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 2;
@@ -215,5 +236,7 @@ public class BeaconListActivity extends AppCompatActivity implements BeaconConsu
             }
         }
     }
+
+    private static final String TAG = BeaconRegistrationActivity.class.getSimpleName() + "1";
 
 }
