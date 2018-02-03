@@ -16,7 +16,7 @@ import retrofit2.http.Path;
  */
 public interface BeaconsAPI {
 
-    @GET("r-beacons/")
+    @GET("r-beacons/?sort=created,desc")
     Call<List<BeaconDTO>> getBeacons();
 
     @POST("r-beacons/")
@@ -27,6 +27,9 @@ public interface BeaconsAPI {
 
     @DELETE("r-beacons/{id}")
     Call<Void> deleteBeacon(@Path("id") Long id);
+
+    @PUT("r-beacons/toggleIsMissing")
+    Call<Void> toggleIsMissing(@Body BeaconDTO beaconDTO);
 
     @POST("ble/trace")
     Call<Void> sendBeaconLT(@Body Set<BeaconLTCommand> beaconLtSet);

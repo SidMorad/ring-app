@@ -10,6 +10,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/my_tags"
+        android:textAllCaps="false"
         android:onClick="goToBeaconListActivity"
         android:drawableTop="@drawable/ic_my_tags_black_24dp"
         app:layout_constraintBottom_toBottomOf="parent"

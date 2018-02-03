@@ -14,6 +14,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -92,7 +93,9 @@ public class BeaconListStorage {
 
             try {
                 Type listType = new TypeToken<List<BeaconDTO>>(){}.getType();
-                return new Gson().fromJson(currentState, listType);
+                List<BeaconDTO> result = new Gson().fromJson(currentState, listType);
+                Collections.sort(result, BeaconDTO.Comparators.ID);
+                return result;
             } catch (JsonSyntaxException ex) {
                 Log.w(TAG, "Failed to deserialize stored BeaconList - discarding");
                 return new ArrayList<BeaconDTO>();
@@ -110,6 +113,7 @@ public class BeaconListStorage {
             if (list == null) {
                 editor.remove(KEY_STATE);
             } else {
+                Collections.sort(list, BeaconDTO.Comparators.ID);
                 editor.putString(KEY_STATE, new Gson().toJson(list));
             }
 

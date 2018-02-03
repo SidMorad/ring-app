@@ -25,14 +25,14 @@ android {
         releaseSigning {
             storeFile file ('GuploadKeystore.jks')
             storePassword ''
-            keyAlias releaseKeyAlias
+            keyAlias 'androidKeystore'
             keyPassword ''
         }
     }
     buildTypes {
         release {
-            minifyEnabled true
             debuggable false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.releaseSigning
         }

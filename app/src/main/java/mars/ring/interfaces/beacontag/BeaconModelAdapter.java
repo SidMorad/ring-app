@@ -17,7 +17,6 @@ import mars.ring.domain.model.beacontag.BeaconDTO;
 /**
  * Created by developer on 12/12/17.
  */
-
 public class BeaconModelAdapter extends BaseAdapter {
 
     List<BeaconDTO> mBeacons = new ArrayList<BeaconDTO>();
@@ -68,7 +67,7 @@ public class BeaconModelAdapter extends BaseAdapter {
             holder = new BeaconModelAdapter.ViewHolder(convertView);
             convertView.setTag(holder);
         }
-        holder.updateAccordingToBeacon(getItem(position), position);
+        holder.updateAccordingToBeacon(getItem(position));
         return convertView;
     }
 
@@ -77,11 +76,13 @@ public class BeaconModelAdapter extends BaseAdapter {
         public ImageButton icon1;
         public ImageButton edit;
         public ImageButton meter;
+        public ImageButton missing;
         public ViewHolder(final View target) {
             text1 = (TextView) target.findViewById(android.R.id.text1);
             icon1 = (ImageButton) target.findViewById(R.id.icon1);
             edit = (ImageButton) target.findViewById(R.id.edit_button);
             meter = (ImageButton) target.findViewById(R.id.meter_button);
+            missing = (ImageButton) target.findViewById(R.id.missing_button);
 
             edit.setImageResource(R.drawable.ic_pencil_balck_24dp);
             edit.setBackgroundResource(R.drawable.border_default);
@@ -101,12 +102,28 @@ public class BeaconModelAdapter extends BaseAdapter {
                     activityInstance.goToShowOneActivity((BeaconDTO) view.getTag());
                 }
             });
+            missing.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d(TAG, "Missing button clicked!" + view.getTag());
+                    activityInstance.openReportLostBeaconDialog((BeaconDTO) view.getTag());
+                }
+            });
         }
-        public void updateAccordingToBeacon(final BeaconDTO beacon, int position) {
+
+        public void updateAccordingToBeacon(final BeaconDTO beacon) {
 
             text1.setText(beacon.getTagName());
             edit.setTag(beacon);
             meter.setTag(beacon);
+            missing.setTag(beacon);
+            if (beacon.isMissing()) {
+                missing.setImageResource(R.drawable.ic_minus_black_24dp);
+                missing.setBackgroundResource(R.drawable.border_danger);
+            } else {
+                missing.setImageResource(R.drawable.ic_check_black_24dp);
+                missing.setBackgroundResource(R.drawable.border_secondary);
+            }
             if (beacon.getCategory() != null) {
                 switch(beacon.getCategory()) {
                     case KEYS:
@@ -130,4 +147,5 @@ public class BeaconModelAdapter extends BaseAdapter {
     }
 
     private final static String TAG = BeaconModelAdapter.class.getSimpleName() + "1";
+
 }

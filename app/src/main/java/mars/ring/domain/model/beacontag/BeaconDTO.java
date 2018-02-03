@@ -1,14 +1,17 @@
 package mars.ring.domain.model.beacontag;
 
 import android.content.Intent;
+import android.support.annotation.NonNull;
 
 import com.google.common.hash.HashCode;
+
+import java.util.Comparator;
 
 /**
  * Created by developer on 12/12/17.
  */
 
-public class BeaconDTO {
+public class BeaconDTO implements Comparable<BeaconDTO> {
     public static final String TAG_NAME = "tagName";
     public static final String CATEGORY = "category";
     public static final String IDENTIFIER = "identifier";
@@ -17,6 +20,7 @@ public class BeaconDTO {
     public static final String MAC = "mac";
     public static final String BATTERY_LEVEL = "batteryLevel";
     public static final String TX_POWER = "txPower";
+    public static final String LOST = "lost";
 
     private Long id;
     private String tagName;
@@ -25,8 +29,7 @@ public class BeaconDTO {
     private Integer major;
     private Integer minor;
     private String mac;
-    private Integer batteryLevel;
-    private Integer txPower;
+    private Boolean lost;
 
     public BeaconDTO() { }
 
@@ -36,13 +39,34 @@ public class BeaconDTO {
         this.major = data.getIntExtra(MAJOR, 0);
         this.minor = data.getIntExtra(MINOR, 0);
         this.mac = data.getStringExtra(MAC);
-        this.batteryLevel = data.getIntExtra(BATTERY_LEVEL, 100);
-        this.txPower = data.getIntExtra(TX_POWER, 0);
         this.category = Category.fromIndex(data.getIntExtra(CATEGORY, 0));
+        this.lost = data.getBooleanExtra(LOST, false);
     }
 
     public int identifierHashCode() {
         return Math.abs((mac + identifier + major + minor).hashCode());
+    }
+
+    public boolean isMissing() {
+        return lost != null && lost;
+    }
+
+    @Override
+    public int compareTo(@NonNull BeaconDTO beaconDTO) {
+        return 0;
+    }
+
+    public static class Comparators {
+        public static Comparator<BeaconDTO> ID = new Comparator<BeaconDTO>() {
+            @Override
+            public int compare(BeaconDTO b1, BeaconDTO b2) {
+                if (b1.getId() < b2.getId()) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }
+        };
     }
 
     public int hashCode() {
@@ -73,16 +97,12 @@ public class BeaconDTO {
         return mac;
     }
 
-    public Integer getBatteryLevel() {
-        return batteryLevel;
-    }
-
-    public Integer getTxPower() {
-        return txPower;
-    }
-
     public Category getCategory() {
         return category;
+    }
+
+    public Boolean getLost() {
+        return lost;
     }
 
     public void setId(Long id) {
@@ -109,15 +129,12 @@ public class BeaconDTO {
         this.mac = mac;
     }
 
-    public void setBatteryLevel(Integer batteryLevel) {
-        this.batteryLevel = batteryLevel;
-    }
-
-    public void setTxPower(Integer txPower) {
-        this.txPower = txPower;
-    }
-
     public void setCategory(Category category) {
         this.category = category;
     }
+
+    public void setLost(Boolean lost) {
+        this.lost = lost;
+    }
+
 }

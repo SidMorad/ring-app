@@ -198,6 +198,25 @@ public class BeaconTagActivity extends AppCompatActivity implements
         dialog.show();
     }
 
+    public void openReportLostBeaconDialog(BeaconDTO dto) {
+        if (app.isNetworkAvailable()) {
+            AlertDialog dialog = AlertBuilderHelper.toggleBeaconIsMissingForm(this, dto, new AlertOnButtonClickedCallback() {
+                @Override
+                public void onPositiveClick(String tagName, Integer categoryIndex, BeaconDTO dto) {
+                    Log.d(TAG, "Send button callback received for " + dto.getTagName());
+                    toggleIsMissing(dto);
+                }
+                @Override
+                public void onNegativeClick(BeaconDTO dto) {
+                }
+            });
+            dialog.show();
+        } else {
+            Toast.makeText(this, getString(R.string.no_internet_access), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
     public void goToShowOneActivity(BeaconDTO dto) {
         Intent intent = new Intent(BeaconTagActivity.this, ShowOneActivity.class);
         intent.putExtra(BeaconDTO.IDENTIFIER, dto.getIdentifier());
@@ -230,7 +249,20 @@ public class BeaconTagActivity extends AppCompatActivity implements
                 getBeacons();
             } else {
                 Toast.makeText(this,
-                        String.format("Error %d: %s", ex.getStatusCode(), ex.getMessage()), Toast.LENGTH_LONG).show();
+                    String.format("Error %d: %s", ex.getStatusCode(), ex.getMessage()),
+                    Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void toggleIsMissing(BeaconDTO dto) {
+        app.getBeaconsRepo().toggleIsMissing(dto, (ex) -> {
+            if (ex == null) {
+                getBeacons();
+            } else {
+                Toast.makeText(this,
+                    String.format("Error %d: %s", ex.getStatusCode(), ex.getMessage()),
+                    Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -327,7 +359,10 @@ public class BeaconTagActivity extends AppCompatActivity implements
             if (mLastKnownLocation != null) {
                 bc.include(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
             }
-            map.moveCamera(CameraUpdateFactory.newLatLngBounds(bc.build(), 50));
+            int width = getResources().getDisplayMetrics().widthPixels;
+            int height = getResources().getDisplayMetrics().heightPixels;
+            int padding = (int) (width * 0.12);  // offset from edges of the map 12% of screen
+            map.moveCamera(CameraUpdateFactory.newLatLngBounds(bc.build(), width, height, padding));
         }
     }
 
