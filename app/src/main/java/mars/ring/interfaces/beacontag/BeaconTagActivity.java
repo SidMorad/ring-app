@@ -204,7 +204,11 @@ public class BeaconTagActivity extends AppCompatActivity implements
                 @Override
                 public void onPositiveClick(String tagName, Integer categoryIndex, BeaconDTO dto) {
                     Log.d(TAG, "Send button callback received for " + dto.getTagName());
-                    toggleIsMissing(dto);
+                    if (dto.isMissing()) {
+                        toggleIsMissing(dto, false);
+                    } else {
+                        toggleIsMissing(dto, true);
+                    }
                 }
                 @Override
                 public void onNegativeClick(BeaconDTO dto) {
@@ -255,8 +259,8 @@ public class BeaconTagActivity extends AppCompatActivity implements
         });
     }
 
-    private void toggleIsMissing(BeaconDTO dto) {
-        app.getBeaconsRepo().toggleIsMissing(dto, (ex) -> {
+    private void toggleIsMissing(BeaconDTO dto, Boolean lost) {
+        app.getBeaconsRepo().toggleIsMissing(dto, lost, (ex) -> {
             if (ex == null) {
                 getBeacons();
             } else {
@@ -286,10 +290,12 @@ public class BeaconTagActivity extends AppCompatActivity implements
                     beaconsAdapter.notifyDataSetChanged();
                 });
                 beaconListStorage.replace((ArrayList<BeaconDTO>) beacons);
+                RingApp.authenticated = true;
             } else {
                 Toast.makeText(this, "Error on getting tag list", Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "Error on getting beacon list", ex);
                 showRetryButton();
+                RingApp.authenticated = false;
             }
         });
     }

@@ -56,6 +56,7 @@ public final class RingApp extends android.app.Application implements BootstrapN
     public final static int RC_FAIL = 0;
     public final static int RC_AUTH = 100;
     public static boolean offline = false;
+    public static boolean authenticated = false;
     public static final long backgroundBetweenScanPeriod = 600000L; // the time between each scan to be 1 hour (3600 seconds)
     public static final long foregroundBetweenScanPeriod = 600000l; // for now same as background
 
@@ -251,15 +252,28 @@ public final class RingApp extends android.app.Application implements BootstrapN
     public void sendBeaconTracesToServer() {
         if (isNetworkAvailable()) {
             if (!foundBeacons.isEmpty()) {
-                beaconsPublicRepo.sendBeaconLT(new HashSet<>(foundBeacons.values()), (ex) -> {
-                    if (ex == null) {
-                        Log.d(TAG, "Sending " + foundBeacons.size() + " beacon's location successfully.");
-                        foundBeacons.clear();
-                        BeaconLTStorage.getInstance(this).replace(new HashSet<>());
-                    } else {
-                        Log.e(TAG, "Sending BeaconLTs failed: " + ex.getStatusCode() + ", " + ex.getMessage(), ex);
-                    }
-                });
+                if (authenticated) {
+                    beaconsRepo.sendBeaconLT(new HashSet<>(foundBeacons.values()), (ex) -> {
+                        if (ex == null) {
+                            Log.d(TAG, "Sending " + foundBeacons.size() + " beacon's location successfully.");
+                            foundBeacons.clear();
+                            BeaconLTStorage.getInstance(this).replace(new HashSet<>());
+                        } else {
+                            Log.e(TAG, "Sending BeaconLTs failed: " + ex.getStatusCode() + ", " + ex.getMessage(), ex);
+                        }
+                    });
+                }
+                else {
+                    beaconsPublicRepo.sendBeaconLT(new HashSet<>(foundBeacons.values()), (ex) -> {
+                        if (ex == null) {
+                            Log.d(TAG, "Sending " + foundBeacons.size() + " beacon's location successfully.");
+                            foundBeacons.clear();
+                            BeaconLTStorage.getInstance(this).replace(new HashSet<>());
+                        } else {
+                            Log.e(TAG, "Sending BeaconLTs failed: " + ex.getStatusCode() + ", " + ex.getMessage(), ex);
+                        }
+                    });
+                }
             }
         }
     }

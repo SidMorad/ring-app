@@ -28,8 +28,8 @@ public interface BeaconsAPI {
     @DELETE("r-beacons/{id}")
     Call<Void> deleteBeacon(@Path("id") Long id);
 
-    @PUT("r-beacons/toggleIsMissing")
-    Call<Void> toggleIsMissing(@Body BeaconDTO beaconDTO);
+    @PUT("r-beacons/toggleIsMissing/{lost}")
+    Call<Void> toggleIsMissing(@Body BeaconDTO beaconDTO, @Path("lost") Boolean lost);
 
     @POST("ble/trace")
     Call<Void> sendBeaconLT(@Body Set<BeaconLTCommand> beaconLtSet);

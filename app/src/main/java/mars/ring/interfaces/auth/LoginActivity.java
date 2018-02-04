@@ -286,6 +286,7 @@ public final class LoginActivity extends AppCompatActivity {
             //noinspection WrongThread
             runOnUiThread(() -> displayError(message, true));
         } else {
+            RingApp.authenticated = true;
 //            runOnUiThread(this::displayAuthorized);
         }
     }

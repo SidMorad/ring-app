@@ -84,12 +84,10 @@ public class BeaconsPublicRepo {
                 }
             }
         }
-
         @Override
         public void onFailure(Call<Void> call, Throwable t) {
             callback.call(new HttpException(503, "Server is not available!"));
         }
-
     }
 
 }

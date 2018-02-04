@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import mars.ring.application.RingApp;
@@ -83,9 +84,14 @@ public class BeaconsRepo {
         request.enqueue(new BeaconLocationsCallbackImpl(callback));
     }
 
-    public void toggleIsMissing(BeaconDTO dto, ReportLostBeaconCallback callback) {
-        Call<Void> request = beaconsAPI.toggleIsMissing(dto);
+    public void toggleIsMissing(BeaconDTO dto, Boolean lost, ReportLostBeaconCallback callback) {
+        Call<Void> request = beaconsAPI.toggleIsMissing(dto, lost);
         request.enqueue(new ReportLostBeaconCallbackImpl(callback));
+    }
+
+    public void sendBeaconLT(Set<BeaconLTCommand> beaconLTSet, SendBeaconLTCallback callback) {
+        Call<Void> request = beaconsAPI.sendBeaconLT(beaconLTSet);
+        request.enqueue(new BeaconsRepo.SendBeaconLTCallbackImpl(callback));
     }
 
     private static class CreateBeaconCallbackImpl implements Callback<Void> {
@@ -224,6 +230,33 @@ public class BeaconsRepo {
         @Override
         public void onFailure(Call<Void> call, Throwable t) {
             callback.call(new HttpException(503, "SORRY, server error: " + t.getMessage()));
+        }
+    }
+
+    private static class SendBeaconLTCallbackImpl implements Callback<Void> {
+        private final SendBeaconLTCallback callback;
+        SendBeaconLTCallbackImpl(SendBeaconLTCallback callback) {
+            this.callback = callback;
+        }
+        @Override
+        public void onResponse(Call<Void> call, Response<Void> response) {
+            if (response.isSuccessful()) {
+                callback.call(null);
+            } else {
+                try {
+                    String errorBody = response.errorBody().string();
+                    Log.w(TAG, errorBody);
+                    ErrorBodyDTO error = new Gson().fromJson(errorBody, ErrorBodyDTO.class);
+                    callback.call(new HttpException(response.code(), error.getTitle()));
+                } catch(Exception e) {
+                    callback.call(new HttpException(0, "Error on parse error!"));
+                    Log.e(TAG, "Exception: ", e);
+                }
+            }
+        }
+        @Override
+        public void onFailure(Call<Void> call, Throwable t) {
+            callback.call(new HttpException(503, "Server is not available!"));
         }
     }
 
