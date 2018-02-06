@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Build;
@@ -22,11 +24,12 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,6 +44,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -56,33 +60,35 @@ import mars.ring.domain.model.beacontag.BeaconDTO;
 import mars.ring.domain.model.beacontag.BeaconLTDTO;
 import mars.ring.domain.model.beacontag.BeaconListStorage;
 import mars.ring.domain.model.beacontag.Category;
+import mars.ring.domain.model.beacontag.FoundNotificationDTO;
 import mars.ring.interfaces.beacontag.discovery.BeaconRegistrationActivity;
 import mars.ring.interfaces.beacontag.discovery.ShowOneActivity;
 import mars.ring.interfaces.beacontag.helpers.AlertBuilderHelper;
 import mars.ring.interfaces.beacontag.helpers.AlertOnButtonClickedCallback;
 
 /**
- * BeaconTagActivity that displays 3 tabs: list of registered beacons | Map | Notifications.
+ * BeaconTagActivity that displays 3 tabs: eTags | Map | Notifications.
  *
  * Created by a developer on 21/11/17.
  */
-
 public class BeaconTagActivity extends AppCompatActivity implements
         BottomNavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
     private RingApp app;
     private BeaconListStorage beaconListStorage;
     private BeaconModelAdapter beaconsAdapter;
+    private FoundNotificationAdapter foundNotificationAdapter;
     private GoogleMap map;
     private SupportMapFragment mapFragment;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private boolean mLocationPermissionGranted = false;
     private Location mLastKnownLocation;
     private Menu mMenu;
-    private Button retryButton;
     private View listContainer;
     private View mapContainer;
+    private View noteContainer;
     private List<BeaconLTDTO> lastBeaconLocations;
+    private BottomNavigationView navTab;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -93,40 +99,50 @@ public class BeaconTagActivity extends AppCompatActivity implements
         beaconListStorage = BeaconListStorage.getInstance(this);
         beaconsAdapter = new BeaconModelAdapter(this);
         beaconsAdapter.setAll(beaconListStorage.getCurrent());
+        foundNotificationAdapter = new FoundNotificationAdapter(this);
 
         listContainer = findViewById(R.id.beacon_list_container);
         mapContainer = findViewById(R.id.beacon_map_container);
+        noteContainer = findViewById(R.id.notification_container);
         mapContainer.setVisibility(View.GONE);
+        noteContainer.setVisibility(View.GONE);
 
-        ListView lv = (ListView) findViewById(R.id.list_view);
-        lv.setAdapter(beaconsAdapter);
-        TextView tv = (TextView) findViewById(R.id.empty);
-        lv.setEmptyView(tv);
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        ListView tagList = (ListView) findViewById(R.id.tag_list);
+        tagList.setAdapter(beaconsAdapter);
+        TextView tv = (TextView) findViewById(R.id.empty_tag_message);
+        tagList.setEmptyView(tv);
+        tagList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 goToShowOneActivity(beaconsAdapter.getItem(i));
             }
         });
-        retryButton = (Button) findViewById(R.id.retry);
-        retryButton.setOnClickListener(new View.OnClickListener() {
+        ListView noteList = (ListView) findViewById(R.id.note_list);
+        noteList.setAdapter(foundNotificationAdapter);
+        TextView emptyNote = (TextView) findViewById(R.id.empty_note_message);
+        noteList.setEmptyView(emptyNote);
+        noteList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onClick(View view) {
-                getBeacons();
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                showNoteOnTheMap(foundNotificationAdapter.getItem(i));
             }
         });
-        hideRetryButton();
 
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_view);
         mapFragment.getMapAsync(this);
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
-        BottomNavigationView tabView = (BottomNavigationView) findViewById(R.id.navigation);
-        tabView.setOnNavigationItemSelectedListener(this);
+        navTab = (BottomNavigationView) findViewById(R.id.navigation);
+        navTab.setOnNavigationItemSelectedListener(this);
 
         if (RingApp.isOnline()) {
             getBeacons();
-            getLastLocations(new GenericCallbackImpl());
+            getLastLocations(new GenericCallbackImpl() {
+                public void onSuccess() {
+                    updateLocationUI(true);
+                }
+            });
+            getFoundNotifications();
         }
     }
 
@@ -149,7 +165,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
                         app.sendBeaconTracesToServer();
                         getLastLocations(new GenericCallback() {
                             public void onSuccess() {
-                                updateLocationUI();
+                                updateLocationUI(true);
                             }
                             public void onFailure(Exception e) {}
                         });
@@ -162,6 +178,15 @@ public class BeaconTagActivity extends AppCompatActivity implements
             } else {
                 Toast.makeText(this, getString(R.string.no_internet_access), Toast.LENGTH_SHORT).show();
             }
+            return true;
+        }
+        if (R.id.sync_last_notifications == item.getItemId()) {
+            if (app.isNetworkAvailable()) {
+                getFoundNotifications();
+            } else {
+                Toast.makeText(this, getString(R.string.no_internet_access), Toast.LENGTH_SHORT).show();
+            }
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -240,7 +265,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
                 getBeacons();
             } else {
                 Toast.makeText(this,
-                        String.format("Error %d: %s", ex.getStatusCode(), ex.getMessage()), Toast.LENGTH_LONG).show();
+                        String.format("Error %d: %s", ex.code(), ex.getMessage()), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -253,7 +278,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
                 getBeacons();
             } else {
                 Toast.makeText(this,
-                    String.format("Error %d: %s", ex.getStatusCode(), ex.getMessage()),
+                    String.format("Error %d: %s", ex.code(), ex.getMessage()),
                     Toast.LENGTH_LONG).show();
             }
         });
@@ -265,7 +290,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
                 getBeacons();
             } else {
                 Toast.makeText(this,
-                    String.format("Error %d: %s", ex.getStatusCode(), ex.getMessage()),
+                    String.format("Error %d: %s", ex.code(), ex.getMessage()),
                     Toast.LENGTH_LONG).show();
             }
         });
@@ -276,13 +301,12 @@ public class BeaconTagActivity extends AppCompatActivity implements
             if (ex == null) {
                 getBeacons();
             } else {
-                Toast.makeText(this, String.format("Error %d: %s", ex.getStatusCode(), ex.getMessage()), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, String.format("Error %d: %s", ex.code(), ex.getMessage()), Toast.LENGTH_LONG).show();
             }
         });
     }
 
     private void getBeacons() {
-        hideRetryButton();
         app.getBeaconsRepo().getBeacons((beacons, ex) -> {
             if (ex == null) {
                 runOnUiThread(() -> {
@@ -294,7 +318,6 @@ public class BeaconTagActivity extends AppCompatActivity implements
             } else {
                 Toast.makeText(this, "Error on getting tag list", Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "Error on getting beacon list", ex);
-                showRetryButton();
                 RingApp.authenticated = false;
             }
         });
@@ -307,8 +330,24 @@ public class BeaconTagActivity extends AppCompatActivity implements
                 call.onSuccess();
             } else {
                 Log.e(TAG, "Error on fetching last beacon locations. ", ex);
-                Toast.makeText(BeaconTagActivity.this, ex.getStatusCode() + ": " + ex.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(BeaconTagActivity.this, ex.code() + ": " + ex.message(), Toast.LENGTH_SHORT).show();
                 call.onFailure(ex);
+            }
+        });
+    }
+
+    private void getFoundNotifications() {
+        app.getBeaconsRepo().foundNotifications((notifications, ex) -> {
+            if (ex == null) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        foundNotificationAdapter.setAll(notifications);
+                        foundNotificationAdapter.notifyDataSetChanged();
+                    }
+                });
+            } else {
+                Toast.makeText(BeaconTagActivity.this, ex.code() + ": " + ex.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -317,15 +356,41 @@ public class BeaconTagActivity extends AppCompatActivity implements
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
         map.getUiSettings().setMapToolbarEnabled(false); // Hide Navigation and Gps Pointer buttons.
+        map.getUiSettings().setZoomControlsEnabled(true);
+
+        map.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            public View getInfoWindow(Marker marker) {
+                return null;
+            }
+            public View getInfoContents(Marker marker) {
+                LinearLayout info = new LinearLayout(BeaconTagActivity.this);
+                info.setOrientation(LinearLayout.VERTICAL);
+
+                TextView title = new TextView(BeaconTagActivity.this);
+                title.setTextColor(Color.BLACK);
+                title.setGravity(Gravity.CENTER);
+                title.setTypeface(null, Typeface.BOLD);
+                title.setText(marker.getTitle());
+
+                TextView snippet = new TextView(BeaconTagActivity.this);
+                snippet.setTextColor(Color.GRAY);
+                snippet.setText(marker.getSnippet());
+
+                info.addView(title);
+                info.addView(snippet);
+
+                return info;
+            }
+        });
 
         // Turn on the My Location layer and the related control on the map.
-        updateLocationUI();
+        updateLocationUI(true);
 
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
     }
 
-    private void updateLocationUI() {
+    private void updateLocationUI(boolean moveCamera) {
         if (map == null) {
             return;
         }
@@ -365,11 +430,33 @@ public class BeaconTagActivity extends AppCompatActivity implements
             if (mLastKnownLocation != null) {
                 bc.include(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
             }
-            int width = getResources().getDisplayMetrics().widthPixels;
-            int height = getResources().getDisplayMetrics().heightPixels;
-            int padding = (int) (width * 0.12);  // offset from edges of the map 12% of screen
-            map.moveCamera(CameraUpdateFactory.newLatLngBounds(bc.build(), width, height, padding));
+            if (moveCamera) {
+                int width = getResources().getDisplayMetrics().widthPixels;
+                int height = getResources().getDisplayMetrics().heightPixels;
+                int padding = (int) (width * 0.12);  // offset from edges of the map 12% of screen
+                map.moveCamera(CameraUpdateFactory.newLatLngBounds(bc.build(), width, height, padding));
+            }
         }
+    }
+
+    protected void showNoteOnTheMap(FoundNotificationDTO note) {
+        if (map == null) {
+            return;
+        }
+        map.clear();
+        LatLngBounds.Builder bc = new LatLngBounds.Builder();
+        bc.include(new LatLng(note.getLat(), note.getLon()));
+        MarkerOptions marker = new MarkerOptions()
+                .position(new LatLng(note.getLat(), note.getLon()))
+                .title(note.getTagName())
+                .snippet(note.snippet())
+                .icon(bitmapDescriptorFromVector(this, Category.resWhite(note.getCategory())));
+        map.addMarker(marker).showInfoWindow();
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int height = getResources().getDisplayMetrics().heightPixels;
+        int padding = (int) (width * 0.12);  // offset from edges of the map 12% of screen
+        map.moveCamera(CameraUpdateFactory.newLatLngBounds(bc.build(), width, height, padding));
+        navTab.setSelectedItemId(R.id.navigation_map);
     }
 
     private void getDeviceLocation() {
@@ -408,24 +495,27 @@ public class BeaconTagActivity extends AppCompatActivity implements
         setTitle(getString(R.string.my_tags));
         listContainer.setVisibility(View.VISIBLE);
         mapContainer.setVisibility(View.GONE);
+        noteContainer.setVisibility(View.GONE);
         mMenu.clear();
         getMenuInflater().inflate(R.menu.beacon_list_menu, mMenu);
-        hideRetryButton();
     }
 
     private void showMap() {
         setTitle(getString(R.string.tag_locations));
         mapContainer.setVisibility(View.VISIBLE);
         listContainer.setVisibility(View.GONE);
+        noteContainer.setVisibility(View.GONE);
         mMenu.clear();
         getMenuInflater().inflate(R.menu.beacon_map_menu, mMenu);
     }
 
     private void showNotifications() {
         setTitle(getString(R.string.tag_notifications));
-        mMenu.clear();
-        listContainer.setVisibility(View.GONE);
+        noteContainer.setVisibility(View.VISIBLE);
         mapContainer.setVisibility(View.GONE);
+        listContainer.setVisibility(View.GONE);
+        mMenu.clear();
+        getMenuInflater().inflate(R.menu.beacon_note_menu, mMenu);
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -437,14 +527,15 @@ public class BeaconTagActivity extends AppCompatActivity implements
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.navigation_beacon_list:
+            case R.id.navigation_tag:
                 showList();
                 return true;
-            case R.id.navigation_beacon_map:
+            case R.id.navigation_map:
                 showMap();
                 return true;
-            case R.id.navigation_notifications:
+            case R.id.navigation_note:
                 showNotifications();
+                getFoundNotifications();
                 return true;
         }
         return false;
@@ -456,7 +547,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
             mLocationPermissionGranted = false;
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 mLocationPermissionGranted = true;
-                updateLocationUI();
+                updateLocationUI(true);
                 getDeviceLocation();
             }
         }
@@ -493,15 +584,6 @@ public class BeaconTagActivity extends AppCompatActivity implements
         background.draw(canvas);
         vectorDrawable.draw(canvas);
         return BitmapDescriptorFactory.fromBitmap(bitmap);
-    }
-
-
-    private void hideRetryButton() {
-        retryButton.setVisibility(View.INVISIBLE);
-    }
-
-    private void showRetryButton() {
-        retryButton.setVisibility(View.VISIBLE);
     }
 
     private boolean plusOrMines = true;

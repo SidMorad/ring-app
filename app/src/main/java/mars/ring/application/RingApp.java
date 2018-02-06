@@ -259,7 +259,7 @@ public final class RingApp extends android.app.Application implements BootstrapN
                             foundBeacons.clear();
                             BeaconLTStorage.getInstance(this).replace(new HashSet<>());
                         } else {
-                            Log.e(TAG, "Sending BeaconLTs failed: " + ex.getStatusCode() + ", " + ex.getMessage(), ex);
+                            Log.e(TAG, "Sending BeaconLTs failed: " + ex.code() + ", " + ex.getMessage(), ex);
                         }
                     });
                 }
@@ -270,7 +270,7 @@ public final class RingApp extends android.app.Application implements BootstrapN
                             foundBeacons.clear();
                             BeaconLTStorage.getInstance(this).replace(new HashSet<>());
                         } else {
-                            Log.e(TAG, "Sending BeaconLTs failed: " + ex.getStatusCode() + ", " + ex.getMessage(), ex);
+                            Log.e(TAG, "Sending BeaconLTs failed: " + ex.code() + ", " + ex.getMessage(), ex);
                         }
                     });
                 }

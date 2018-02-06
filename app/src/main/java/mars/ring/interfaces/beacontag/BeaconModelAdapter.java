@@ -78,7 +78,7 @@ public class BeaconModelAdapter extends BaseAdapter {
         public ImageButton meter;
         public ImageButton missing;
         public ViewHolder(final View target) {
-            text1 = (TextView) target.findViewById(android.R.id.text1);
+            text1 = (TextView) target.findViewById(R.id.text1);
             icon1 = (ImageButton) target.findViewById(R.id.icon1);
             edit = (ImageButton) target.findViewById(R.id.edit_button);
             meter = (ImageButton) target.findViewById(R.id.meter_button);

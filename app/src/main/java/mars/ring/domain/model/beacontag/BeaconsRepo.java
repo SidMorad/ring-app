@@ -84,6 +84,11 @@ public class BeaconsRepo {
         request.enqueue(new BeaconLocationsCallbackImpl(callback));
     }
 
+    public void foundNotifications(FoundNotificationsCallback callback) {
+        Call<List<FoundNotificationDTO>> request = beaconsAPI.foundNotifications();
+        request.enqueue(new FoundNotificationsCallbackImpl(callback));
+    }
+
     public void toggleIsMissing(BeaconDTO dto, Boolean lost, ReportLostBeaconCallback callback) {
         Call<Void> request = beaconsAPI.toggleIsMissing(dto, lost);
         request.enqueue(new ReportLostBeaconCallbackImpl(callback));
@@ -126,8 +131,7 @@ public class BeaconsRepo {
         @Override
         public void onResponse(Call<List<BeaconDTO>> call, Response<List<BeaconDTO>> response) {
             if (response.isSuccessful()) {
-                List<BeaconDTO> result = response.body();
-                callback.call(result, null);
+                callback.call(response.body(), null);
             } else {
                 callback.call(Collections.emptyList(), new HttpException(response.code(), "SORRY, something went wrong."));
             }
@@ -135,6 +139,25 @@ public class BeaconsRepo {
         @Override
         public void onFailure(Call<List<BeaconDTO>> call, Throwable t) {
             callback.call(Collections.emptyList(), new HttpException(503, "SORRY, server error: " + t.getMessage()));
+        }
+    }
+
+    private static class FoundNotificationsCallbackImpl implements Callback<List<FoundNotificationDTO>> {
+        private FoundNotificationsCallback callback;
+        public FoundNotificationsCallbackImpl(FoundNotificationsCallback callback) {
+            this.callback = callback;
+        }
+        @Override
+        public void onResponse(Call<List<FoundNotificationDTO>> call, Response<List<FoundNotificationDTO>> response) {
+            if (response.isSuccessful()) {
+                callback.call(response.body(), null);
+            } else {
+                callback.call(null, new HttpException(response.code(), "SORRY, something went wrong."));
+            }
+        }
+        @Override
+        public void onFailure(Call<List<FoundNotificationDTO>> call, Throwable t) {
+            callback.call(null, new HttpException(503, "SORRY, server error: " + t.getMessage()));
         }
     }
 

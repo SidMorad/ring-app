@@ -7,5 +7,5 @@ import java.util.List;
  */
 
 public interface BeaconListCallback {
-    void call(List<BeaconDTO> beacons, Exception e);
+    void call(List<BeaconDTO> beacons, HttpException e);
 }

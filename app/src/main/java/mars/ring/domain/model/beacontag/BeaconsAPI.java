@@ -37,4 +37,7 @@ public interface BeaconsAPI {
     @GET("ble/locations")
     Call<List<BeaconLTDTO>> lastLocations();
 
+    @GET("found-notifications/?sort=recordedAt,desc")
+    Call<List<FoundNotificationDTO>> foundNotifications();
+
 }
