@@ -28,7 +28,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class BeaconsPublicRepo {
     private static final String TAG = BeaconsRepo.class.getSimpleName();
-    private final String BEACONS_URL_BASE = "https://ring.webebook.org/api/";
 
     private RingApp app;
     private BeaconsAPI beaconsAPI;
@@ -51,7 +50,7 @@ public class BeaconsPublicRepo {
 
         Gson gson = new GsonBuilder().setLenient().create();
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BEACONS_URL_BASE)
+                .baseUrl(BeaconsRepo.BEACONS_URL_BASE)
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build();

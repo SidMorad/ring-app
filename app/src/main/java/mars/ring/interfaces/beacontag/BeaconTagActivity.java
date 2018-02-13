@@ -410,6 +410,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
         if (lastBeaconLocations != null) {
             map.clear();
             LatLngBounds.Builder bc = new LatLngBounds.Builder();
+            boolean includedPoints = false;
             int i = 0;
             for (BeaconLTDTO b: lastBeaconLocations) {
                 Double lon;
@@ -421,6 +422,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
                     plusOrMines = !plusOrMines;
                 }
                 bc.include(new LatLng(b.getLat(), lon));
+                includedPoints = true;
                 MarkerOptions marker = new MarkerOptions()
                         .position(new LatLng(b.getLat(), lon))
                         .title(b.getTagName())
@@ -429,8 +431,9 @@ public class BeaconTagActivity extends AppCompatActivity implements
             }
             if (mLastKnownLocation != null) {
                 bc.include(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
+                includedPoints = true;
             }
-            if (moveCamera) {
+            if (moveCamera && includedPoints) {
                 int width = getResources().getDisplayMetrics().widthPixels;
                 int height = getResources().getDisplayMetrics().heightPixels;
                 int padding = (int) (width * 0.12);  // offset from edges of the map 12% of screen

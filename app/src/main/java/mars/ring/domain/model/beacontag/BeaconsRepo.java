@@ -26,7 +26,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class BeaconsRepo {
     private static final String TAG = BeaconsRepo.class.getSimpleName() + "1";
-    private final String BEACONS_URL_BASE = "https://ring.webebook.org/api/";
+    public static final String BEACONS_URL_BASE = "https://mars.webebook.org/ring/api/";
 
     private RingApp app;
     private AuthRepo authRepo;

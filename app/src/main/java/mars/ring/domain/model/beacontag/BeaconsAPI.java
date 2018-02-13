@@ -16,7 +16,7 @@ import retrofit2.http.Path;
  */
 public interface BeaconsAPI {
 
-    @GET("r-beacons/?sort=created,desc")
+    @GET("r-beacons/?sort=createdAt,desc")
     Call<List<BeaconDTO>> getBeacons();
 
     @POST("r-beacons/")
