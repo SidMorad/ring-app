@@ -56,6 +56,7 @@ import mars.ring.R;
 import mars.ring.application.RingApp;
 import mars.ring.application.util.GenericCallback;
 import mars.ring.application.util.GenericCallbackImpl;
+import mars.ring.application.util.TextUtil;
 import mars.ring.domain.model.beacontag.BeaconDTO;
 import mars.ring.domain.model.beacontag.BeaconLTDTO;
 import mars.ring.domain.model.beacontag.BeaconListStorage;
@@ -265,7 +266,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
                 getBeacons();
             } else {
                 Toast.makeText(this,
-                        String.format("Error %d: %s", ex.code(), ex.getMessage()), Toast.LENGTH_LONG).show();
+                        TextUtil.format("Error %d: %s", ex.code(), ex.getMessage()), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -278,7 +279,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
                 getBeacons();
             } else {
                 Toast.makeText(this,
-                    String.format("Error %d: %s", ex.code(), ex.getMessage()),
+                    TextUtil.format("Error %d: %s", ex.code(), ex.getMessage()),
                     Toast.LENGTH_LONG).show();
             }
         });
@@ -290,7 +291,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
                 getBeacons();
             } else {
                 Toast.makeText(this,
-                    String.format("Error %d: %s", ex.code(), ex.getMessage()),
+                    TextUtil.format("Error %d: %s", ex.code(), ex.getMessage()),
                     Toast.LENGTH_LONG).show();
             }
         });
@@ -301,7 +302,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
             if (ex == null) {
                 getBeacons();
             } else {
-                Toast.makeText(this, String.format("Error %d: %s", ex.code(), ex.getMessage()), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, TextUtil.format("Error %d: %s", ex.code(), ex.getMessage()), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -470,7 +471,7 @@ public class BeaconTagActivity extends AppCompatActivity implements
         try {
             if (mLocationPermissionGranted) {
                 Task<Location> locationResult = mFusedLocationProviderClient.getLastLocation();
-                locationResult.addOnCompleteListener(this, new OnCompleteListener() {
+                locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
                     @Override
                     public void onComplete(@NonNull Task task) {
                         if (task.isSuccessful()) {

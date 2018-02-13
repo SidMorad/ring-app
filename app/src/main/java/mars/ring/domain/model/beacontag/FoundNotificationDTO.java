@@ -8,6 +8,8 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.TimeZone;
 
+import mars.ring.application.util.TextUtil;
+
 /**
  * Created by developer on 05/02/18.
  */
@@ -51,7 +53,7 @@ public class FoundNotificationDTO {
     }
 
     public String snippet() {
-        return String.format(
+        return TextUtil.format(
             "Recorded distance: %s\nRecord time: %s\nReceive time: %s",
                 distance(), recordedAt(), receivedAt());
     }

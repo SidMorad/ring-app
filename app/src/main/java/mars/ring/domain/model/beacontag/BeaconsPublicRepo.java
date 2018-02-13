@@ -25,7 +25,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 /**
  * Created by developer on 18/01/18.
  */
-
 public class BeaconsPublicRepo {
     private static final String TAG = BeaconsRepo.class.getSimpleName();
 

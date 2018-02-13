@@ -58,15 +58,15 @@ dependencies {
     implementation 'org.altbeacon:android-beacon-library:2.12.4'
     implementation 'net.openid:appauth:0.7.0'
     implementation 'com.squareup.okio:okio:1.13.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.9.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.9.1'
     implementation 'com.squareup.retrofit2:retrofit:2.3.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.3.0'
     implementation  group: 'com.google.guava', name: 'guava', version: '23.2-android'
     implementation 'com.jakewharton.threetenabp:threetenabp:1.0.5'
 
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:0.5'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:2.2.2'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
 }
 
 task run(dependsOn: 'installDebug') {
@@ -91,4 +91,9 @@ gradle.taskGraph.whenReady { taskGraph ->
         android.signingConfigs.releaseSigning.storePassword = new String(pass)
         android.signingConfigs.releaseSigning.keyPassword = new String(pass)
     }
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ["-Xlint:unchecked"]
+//    println 'Compiler args: ' + options.compilerArgs
 }

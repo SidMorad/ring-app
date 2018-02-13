@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mars.ring.R;
+import mars.ring.application.util.TextUtil;
 import mars.ring.domain.model.beacontag.FoundNotificationDTO;
 
 /**
@@ -89,7 +90,7 @@ public class FoundNotificationAdapter extends BaseAdapter {
         public void updateRow(final FoundNotificationDTO note) {
             text1.setText(note.getTagName());
             String date = DateTimeFormatter.ofPattern("hh:mm E d MMM yyyy").format(note.getRecordedAt().withZoneSameInstant(ZoneId.systemDefault()));
-            noteText.setText(String.format("was seen here at %s", date));
+            noteText.setText(TextUtil.format("was seen here at %s", date));
             showInTheMap.setTag(note);
 
             if (note.getCategory() != null) {

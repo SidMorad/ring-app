@@ -13,6 +13,7 @@ import java.util.ListIterator;
 import java.util.Set;
 
 import mars.ring.BuildConfig;
+import mars.ring.application.util.TextUtil;
 import mars.ring.domain.model.beacontag.Beacon;
 
 /**
@@ -85,12 +86,12 @@ public class BeaconsAdapter extends BaseAdapter {
         }
         public void updateAccordingToBeacon(final Beacon beacon) {
             text1.setText(beacon.distance());
-            String secondLine = String.format(
+            String secondLine = TextUtil.format(
                     "Identifier: %d, rssi: %d",
                     beacon.identifierHashCode(),
                     beacon.rssi);
             if (BuildConfig.DEBUG) {
-                secondLine += String.format("\n Mac: %s \n Id1: %s \n Major: %d \n Minor: %d \n TxPower: %d \n",
+                secondLine += TextUtil.format("\n Mac: %s \n Id1: %s \n Major: %d \n Minor: %d \n TxPower: %d \n",
                         beacon.mac, beacon.identifier, beacon.major, beacon.minor, beacon.txPower);
             }
             text2.setText(secondLine);

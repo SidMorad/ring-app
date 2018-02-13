@@ -1,5 +1,6 @@
 package mars.ring.application;
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
@@ -51,8 +52,8 @@ import mars.ring.domain.model.beacontag.BeaconsRepo;
  */
 public final class RingApp extends android.app.Application implements BootstrapNotifier, BeaconConsumer, RangeNotifier {
 
-    public static final String RING_UUID = "0be1cc29-2222-4444-8888-00bbee11cc00";
-    public static final Identifier RING_ID1 = Identifier.fromUuid(UUID.fromString(RING_UUID));
+//    public static final String RING_UUID = "0be1cc29-2222-4444-8888-00bbee11cc00";
+//    public static final Identifier RING_ID1 = Identifier.fromUuid(UUID.fromString(RING_UUID));
     public final static int RC_FAIL = 0;
     public final static int RC_AUTH = 100;
     public static boolean offline = false;
@@ -68,7 +69,7 @@ public final class RingApp extends android.app.Application implements BootstrapN
     private BackgroundPowerSaver backgroundPowerSaver;
     private boolean haveDetectedBeaconsSinceBoot = false;
     private Region globalRegion;
-    private final HashMap<Integer, BeaconLTCommand> foundBeacons = new HashMap<Integer, BeaconLTCommand>();
+    private final HashMap<String, BeaconLTCommand> foundBeacons = new HashMap<String, BeaconLTCommand>();
     private FusedLocationProviderClient fusedLocationProviderClient;
 
     @Override
@@ -88,7 +89,7 @@ public final class RingApp extends android.app.Application implements BootstrapN
 
         Log.d(TAG, "Setting up background monitoring for beacons and power saving");
         // wakeup the app when a beacon is seen
-        globalRegion = new Region("backgroundRegion", RING_ID1, null, null);
+        globalRegion = new Region("backgroundRegion", null, null, null);
         regionBootstrap = new RegionBootstrap(this, globalRegion);
 
         // simply constructing this class and holding a reference to it in Application
@@ -101,7 +102,7 @@ public final class RingApp extends android.app.Application implements BootstrapN
         BeaconLTStorage beaconLTStorage = BeaconLTStorage.getInstance(this);
         Log.d(TAG, "Number of saved beacons are " + beaconLTStorage.getCurrent().size());
         for (BeaconLTCommand b: beaconLTStorage.getCurrent()) {
-            foundBeacons.put(b.hashCode(), b);
+            foundBeacons.put(b.getMac(), b);
             Log.d(TAG, "Put " + b.hashCode() + " into found beacons.");
         }
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -164,7 +165,7 @@ public final class RingApp extends android.app.Application implements BootstrapN
                                         if (lastLocation != null) {
                                             for (Beacon b : collection) {
                                                 BeaconLTCommand blt = new BeaconLTCommand(b, lastLocation.getLatitude(), lastLocation.getLongitude());
-                                                foundBeacons.put(blt.hashCode(), blt);
+                                                foundBeacons.put(blt.getMac(), blt);
                                             }
                                             saveFoundBeaconBLs();
                                         }
@@ -234,6 +235,7 @@ public final class RingApp extends android.app.Application implements BootstrapN
         return beaconsRepo;
     }
 
+    @SuppressLint("PackageManagerGetSignatures")
     public String getSignature() {
         try {
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_SIGNATURES);

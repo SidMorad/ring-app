@@ -38,7 +38,7 @@ import mars.ring.domain.model.beacontag.BeaconDTO;
 import mars.ring.domain.model.beacontag.BeaconListStorage;
 import mars.ring.interfaces.beacontag.BeaconsAdapter;
 
-import static mars.ring.application.RingApp.RING_ID1;
+// import static mars.ring.application.RingApp.RING_ID1;
 
 /**
  * BeaconRegistrationActivity a class that shows list of (known/unknown)beacons.
@@ -50,8 +50,8 @@ public class BeaconRegistrationActivity extends AppCompatActivity implements Bea
 
     final private BeaconsAdapter mAdapter = new BeaconsAdapter();
     private BeaconManager beaconManager;
-    private Region discoveryRegion = new Region("myDiscoveryUniqueId", RING_ID1, null, null);
-    private Map<Integer, Boolean> myBeaconMap = new HashMap<Integer, Boolean>();;
+    private Region discoveryRegion = new Region("myDiscoveryUniqueId", null, null, null);
+    private Map<String, Boolean> myBeaconMap = new HashMap<String, Boolean>();;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,7 +101,7 @@ public class BeaconRegistrationActivity extends AppCompatActivity implements Bea
         Beacon.clearBeaconMap();    // Making sure there is no left beacon in the map from previous activity - considering 4 seconds delay
         myBeaconMap.clear();
         for (BeaconDTO dto: BeaconListStorage.getInstance(this).getCurrent()) {
-            myBeaconMap.put(dto.getMac().hashCode(), true);
+            myBeaconMap.put(dto.getMac(), true);
         }
         Log.d(TAG, "BeaconRegistrationActivty onStartCalled. #of my beacons is " + myBeaconMap.size());
     }
@@ -124,7 +124,7 @@ public class BeaconRegistrationActivity extends AppCompatActivity implements Bea
             for (org.altbeacon.beacon.Beacon b: beacons) {
                 boolean isMine = false;
                 Log.d(TAG, "############################" + myBeaconMap.size());
-                if (myBeaconMap.containsKey(b.getBluetoothAddress().hashCode())) {
+                if (myBeaconMap.containsKey(b.getBluetoothAddress())) {
                     Log.d(TAG, "Bingo!");
                     isMine = true;
                 }
