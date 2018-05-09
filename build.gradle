@@ -3,7 +3,7 @@
 ext {
     versionNum = 8
     versionName = "1.6"
-    versionDate = "2018/04/22"
+    versionDate = "2018/05/09"
     minSdkVersion = 18
     compileSdkVersion = 26
     buildToolsVersion = '26.0.2'
